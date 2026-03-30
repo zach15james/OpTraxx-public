@@ -1,8 +1,17 @@
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
+
 function App() {
   return (
-    <div>
-      <h1>OpTraxx</h1>
-    </div>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<div>Landing Page</div>} />
+        <Route path="/login" element={<div>Login</div>} />
+        <Route path="/signup" element={<div>Sign Up</div>} />
+        <Route path="/dashboard/:teamId" element={<div>Dashboard</div>} />
+        <Route path="/team/:teamId" element={<div>Team Page</div>} />
+        <Route path="/forms" element={<div>Forms</div>} />
+      </Routes>
+    </BrowserRouter>
   )
 }
 
