@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import MainLayout from './layouts/MainLayout'
 import Landing from './pages/Landing'
 import Login from './pages/Login'
 import Signup from './pages/Signup'
@@ -10,12 +11,17 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
+        {/* Public routes */}
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
-        <Route path="/dashboard/:teamId" element={<Dashboard />} />
-        <Route path="/team/:teamId" element={<Team />} />
-        <Route path="/forms" element={<Forms />} />
+
+        {/* Protected routes with MainLayout */}
+        <Route element={<MainLayout />}>
+          <Route path="/dashboard/:teamId" element={<Dashboard />} />
+          <Route path="/team/:teamId" element={<Team />} />
+          <Route path="/forms" element={<Forms />} />
+        </Route>
       </Routes>
     </BrowserRouter>
   )
