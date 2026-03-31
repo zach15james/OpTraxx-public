@@ -1,5 +1,7 @@
+import HeroSectionThree from '@/components/hero-section-three'
+
 function Landing() {
-  return <div>Landing Page</div>
+  return <HeroSectionThree />
 }
 
 export default Landing
