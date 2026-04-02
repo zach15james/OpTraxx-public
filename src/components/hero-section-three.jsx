@@ -28,7 +28,7 @@ export default function HeroSection() {
                                     </Button>
                                     <Button asChild size="lg" variant="outline" className="border-[#64748B]">
                                         <Link to="#demo">
-                                            <span className="text-nowrap">Request a Demo</span>
+                                            <span className="text-nowrap">Contact the OpTraxx team</span>
                                         </Link>
                                     </Button>
                                 </div>

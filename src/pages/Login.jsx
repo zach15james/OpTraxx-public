@@ -1,5 +1,7 @@
+import LoginOne from '@/components/login-one'
+
 function Login() {
-  return <div>Login</div>
+  return <LoginOne />
 }
 
 export default Login
