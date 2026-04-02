@@ -95,7 +95,7 @@ export default function PricingSectionTwo() {
                                 </CardHeader>
                                 <div className="border-y px-8 py-4">
                                     <Button asChild className="w-full" variant="outline">
-                                        <Link to="/signup">Contact Sales</Link>
+                                        <Link to="/contact">Contact Sales</Link>
                                     </Button>
                                 </div>
                                 <ul role="list" className="space-y-3 p-8">
