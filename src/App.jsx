@@ -7,6 +7,7 @@ import Dashboard from './pages/Dashboard'
 import Team from './pages/Team'
 import Forms from './pages/Forms'
 import Pricing from './pages/Pricing'
+import About from './pages/About'
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/pricing" element={<Pricing />} />
+        <Route path="/about" element={<About />} />
 
         {/* Protected routes with MainLayout */}
         <Route element={<MainLayout />}>
