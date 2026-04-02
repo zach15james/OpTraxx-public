@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils'
 
 const menuItems = [
     { name: 'Features', href: '#features' },
-    { name: 'Pricing', href: '#pricing' },
+    { name: 'Pricing', href: '/pricing' },
     { name: 'About', href: '#about' },
 ]
 
@@ -34,7 +34,7 @@ export const HeroHeader = () => {
                     <div
                         className="relative flex flex-wrap items-center justify-between gap-6 py-4 lg:gap-0 lg:py-3">
                         <div className="flex w-full justify-between gap-6 lg:w-auto">
-                            <Link href="/" aria-label="home" className="flex items-center space-x-2">
+                            <Link to="/" aria-label="home" className="flex items-center space-x-2">
                                 <Logo />
                             </Link>
 
@@ -53,7 +53,7 @@ export const HeroHeader = () => {
                                     {menuItems.map((item, index) => (
                                         <li key={index}>
                                             <Button asChild variant="ghost" size="sm">
-                                                <Link href={item.href} className="text-base">
+                                                <Link to={item.href} className="text-base">
                                                     <span>{item.name}</span>
                                                 </Link>
                                             </Button>
@@ -70,7 +70,7 @@ export const HeroHeader = () => {
                                     {menuItems.map((item, index) => (
                                         <li key={index}>
                                             <Link
-                                                href={item.href}
+                                                to={item.href}
                                                 className="text-muted-foreground hover:text-accent-foreground block duration-150">
                                                 <span>{item.name}</span>
                                             </Link>

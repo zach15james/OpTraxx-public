@@ -6,6 +6,7 @@ import Signup from './pages/Signup'
 import Dashboard from './pages/Dashboard'
 import Team from './pages/Team'
 import Forms from './pages/Forms'
+import Pricing from './pages/Pricing'
 
 function App() {
   return (
@@ -15,13 +16,14 @@ function App() {
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/pricing" element={<Pricing />} />
 
         {/* Protected routes with MainLayout */}
         <Route element={<MainLayout />}>
           <Route path="/dashboard/:teamId" element={<Dashboard />} />
           <Route path="/team/:teamId" element={<Team />} />
           <Route path="/forms" element={<Forms />} />
-        </Route>
+          </Route>
       </Routes>
     </BrowserRouter>
   )
