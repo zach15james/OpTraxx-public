@@ -9,6 +9,7 @@ const menuItems = [
     { name: 'Features', href: '#features' },
     { name: 'Pricing', href: '/pricing' },
     { name: 'About', href: '/about' },
+    { name: 'Contact Us', href: '/contact' },
 ]
 
 export const HeroHeader = () => {
@@ -20,7 +21,7 @@ export const HeroHeader = () => {
             setIsScrolled(window.scrollY > 50)
         }
         window.addEventListener('scroll', handleScroll)
-        return () => window.removeEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll)
     }, [])
     return (
         <header>
@@ -78,28 +79,15 @@ export const HeroHeader = () => {
                                     ))}
                                 </ul>
                             </div>
-                            <div
-                                className="flex w-full flex-col space-y-3 sm:flex-row sm:gap-3 sm:space-y-0 md:w-fit">
-                                                <Button
-                                    asChild
-                                    variant="ghost"
-                                    size="sm"
-                                    className={cn(isScrolled && 'lg:hidden')}>
+                            <div className="flex w-full flex-col space-y-3 sm:flex-row sm:gap-3 sm:space-y-0 md:w-fit">
+                                <Button asChild variant="ghost" size="sm">
                                     <Link to="/login">
                                         <span>Login</span>
                                     </Link>
                                 </Button>
-                                <Button asChild size="sm" className={cn(isScrolled && 'lg:hidden', 'bg-[#2563eb] hover:bg-[#2563eb]/90')}>
+                                <Button asChild size="sm" className="bg-[#2563eb] hover:bg-[#2563eb]/90">
                                     <Link to="/signup">
                                         <span>Sign Up</span>
-                                    </Link>
-                                </Button>
-                                <Button
-                                    asChild
-                                    size="sm"
-                                    className={cn(isScrolled ? 'lg:inline-flex' : 'hidden', 'bg-[#2563eb] hover:bg-[#2563eb]/90')}>
-                                    <Link to="/signup">
-                                        <span>Get Started</span>
                                     </Link>
                                 </Button>
                             </div>

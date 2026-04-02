@@ -6,10 +6,7 @@ import { Logo } from '@/components/logo'
 
 export default function PricingSectionTwo() {
     return (
-        <div className="bg-[#F8FAFC] relative py-16 md:py-32">
-            <Button asChild size="default" className="absolute top-4 left-4 bg-[#2563eb] hover:bg-[#2563eb]/90 text-white">
-                <Link to="/">← Back to landing page</Link>
-            </Button>
+        <div className="bg-[#F8FAFC] py-16 md:py-32">
             <div className="mx-auto max-w-5xl px-6">
                 <div className="mx-auto max-w-2xl text-center">
                     <div className="flex justify-center mb-6">

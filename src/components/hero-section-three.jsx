@@ -1,22 +1,22 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
-import { HeroHeader } from './header'
 import { UsersIcon, FileTextIcon, BarChart3Icon } from 'lucide-react'
+import landingImage from '@/assets/Landing-Page-Image.png'
 
 export default function HeroSection() {
     return (
         <>
-            <HeroHeader />
             <main className="bg-[#F8FAFC] overflow-hidden min-h-screen">
                 <section>
                     <div className="relative py-24">
                         <div className="mx-auto max-w-5xl px-6">
+                            <div className="grid items-center gap-4 lg:grid-cols-[3fr_4fr]">
                             <div>
-                                <h1 className="mt-8 max-w-2xl text-balance text-5xl font-bold lg:text-6xl text-[#0F172A]">
+                                <h1 className="mt-8 text-balance text-5xl font-bold lg:text-6xl text-[#0F172A]">
                                     Streamline Team Management with OpTraxx
                                 </h1>
-                                <p className="text-foreground my-6 max-w-2xl text-balance text-2xl">
+                                <p className="text-foreground my-6 text-balance text-2xl">
                                     Custom forms, real-time tracking, analytics, seamless collaboration.
                                 </p>
 
@@ -27,12 +27,19 @@ export default function HeroSection() {
                                         </Link>
                                     </Button>
                                     <Button asChild size="lg" variant="outline" className="border-[#64748B]">
-                                        <Link to="#demo">
+                                        <Link to="/contact">
                                             <span className="text-nowrap">Contact the OpTraxx team</span>
                                         </Link>
                                     </Button>
                                 </div>
                             </div>
+                            <div className="flex items-center justify-center">
+                                <img
+                                    src={landingImage}
+                                    alt="OpTraxx dashboard preview"
+                                    className="w-full" />
+                            </div>
+                        </div>
 
                             {/* Features Grid */}
                             <div className="mt-16 grid gap-8 md:grid-cols-3">

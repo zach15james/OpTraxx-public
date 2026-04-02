@@ -13,9 +13,7 @@ export default function SignUpOne() {
             <form action="" className="max-w-92 m-auto h-fit w-full">
                 <div className="p-6">
                     <div>
-                        <Link to="/" aria-label="go home">
-                            <Logo className="h-8" />
-                        </Link>
+                        <Logo className="h-8" />
                         <h1 className="mt-6 text-balance text-xl font-semibold">
                             <span className="text-muted-foreground">Welcome to OpTraxx!</span> Create an Account to Get Started
                         </h1>
