@@ -24,12 +24,13 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible'
-import { LayoutDashboardIcon, UsersIcon, FileTextIcon, ChevronDownIcon, ChevronRightIcon } from 'lucide-react'
+import { LayoutDashboardIcon, UsersIcon, FileTextIcon, ChevronRightIcon } from 'lucide-react'
 import logoWithText from '@/assets/OpTraxx_Logo_withText.png'
 
 export default function MainLayout() {
   const location = useLocation()
   const [isTeamsOpen, setIsTeamsOpen] = useState(true)
+  const [isDashboardsOpen, setIsDashboardsOpen] = useState(false)
 
   // Mock user data - replace with actual user context later
   const user = {
@@ -49,25 +50,46 @@ export default function MainLayout() {
   return (
     <SidebarProvider
       style={{
-        '--sidebar-width': '12rem',
+        '--sidebar-width': '16rem',
       }}
     >
       <Sidebar className="!bg-[#0F172A] !border-[#0F172A]">
         <SidebarContent className="!bg-[#0F172A]">
           <SidebarMenu className="gap-1">
-            {/* Dashboard */}
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                asChild
-                isActive={location.pathname.startsWith('/dashboard')}
-                className="!text-white hover:!bg-white/10 data-active:!bg-[#2563eb] data-active:!text-white [&>svg]:!text-white"
-              >
-                <Link to="/dashboard/1">
-                  <LayoutDashboardIcon />
-                  <span>Dashboard</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
+
+            {/* Dashboard Selector */}
+            <Collapsible open={isDashboardsOpen} onOpenChange={setIsDashboardsOpen} asChild>
+              <SidebarMenuItem>
+                <CollapsibleTrigger asChild>
+                  <SidebarMenuButton
+                    isActive={location.pathname.startsWith('/dashboard')}
+                    className="!text-white hover:!bg-white/10 data-active:!bg-[#2563eb] data-active:!text-white [&>svg]:!text-white"
+                  >
+                    <LayoutDashboardIcon />
+                    <span>Dashboard</span>
+                    <ChevronRightIcon className="ml-auto transition-transform group-data-open/collapsible:rotate-90" />
+                  </SidebarMenuButton>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <SidebarMenuSub className="!border-white/20">
+                    {teams.map((team) => (
+                      <SidebarMenuSubItem key={team.id}>
+                        <SidebarMenuSubButton
+                          asChild
+                          isActive={location.pathname === `/dashboard/${team.id}`}
+                          className="!text-white/80 hover:!bg-white/10 hover:!text-white data-active:!bg-[#2563eb] data-active:!text-white"
+                        >
+                          <Link to={`/dashboard/${team.id}`}>
+                            <span>{team.name}</span>
+                            <span className="ml-auto text-xs opacity-60">{team.role}</span>
+                          </Link>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                    ))}
+                  </SidebarMenuSub>
+                </CollapsibleContent>
+              </SidebarMenuItem>
+            </Collapsible>
 
             {/* Team - Collapsible */}
             <Collapsible open={isTeamsOpen} onOpenChange={setIsTeamsOpen} asChild>
@@ -115,6 +137,7 @@ export default function MainLayout() {
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
+
           </SidebarMenu>
         </SidebarContent>
       </Sidebar>
@@ -125,45 +148,13 @@ export default function MainLayout() {
           {/* Left: Sidebar trigger + Logo */}
           <div className="flex items-center gap-4">
             <SidebarTrigger />
-            <Link to="/dashboard/1" className="flex items-center">
+            <Link to="/" className="flex items-center">
               <img
                 src={logoWithText}
                 alt="OpTraxx"
                 className="h-8"
               />
             </Link>
-          </div>
-
-          {/* Center-Left: My Dashboards Dropdown */}
-          <div className="flex-1 px-8">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="outline"
-                  className="gap-2 border-white bg-[#2563eb] text-white hover:bg-[#2563eb]/90"
-                >
-                  My Dashboards
-                  <ChevronDownIcon className="size-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-64">
-                <DropdownMenuLabel>Your Teams</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                {teams.map((team) => (
-                  <DropdownMenuItem key={team.id} asChild>
-                    <Link
-                      to={`/dashboard/${team.id}`}
-                      className="flex flex-col items-start gap-0.5"
-                    >
-                      <span className="font-medium">{team.name}</span>
-                      <span className="text-xs text-muted-foreground">
-                        {team.role}
-                      </span>
-                    </Link>
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
           </div>
 
           {/* Right: User Avatar with Dropdown */}
