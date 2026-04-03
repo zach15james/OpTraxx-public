@@ -1,13 +1,17 @@
 import { ArrowRight, Users, FileText, BarChart3 } from 'lucide-react'
+import { Logo } from '@/components/logo'
 
 export default function ContentFour() {
     return (
         <section className="bg-[#F8FAFC]">
-            <div className="py-24">
+            <div className="py-16 md:py-32">
                 <div className="mx-auto w-full max-w-5xl px-6">
                     <div className="@container mx-auto max-w-2xl">
-                        <div>
-                            <h2 className="text-4xl font-semibold text-[#0F172A]">Built for every team, every industry</h2>
+                        <div className="flex justify-center mb-6">
+                            <Logo className="h-28" />
+                        </div>
+                        <div className="text-center">
+                            <h2 className="text-balance text-3xl font-bold md:text-4xl lg:text-5xl text-[#0F172A]">Built for every team, every industry</h2>
                             <p className="text-muted-foreground mb-12 mt-4 text-xl">
                                 OpTraxx is a web-based platform that empowers supervisors and employees to collaborate effectively — through custom form building, role-based team management, and real-time performance tracking. Whether you're managing a field crew, a retail team, or a remote workforce, OpTraxx adapts to how you work.
                             </p>

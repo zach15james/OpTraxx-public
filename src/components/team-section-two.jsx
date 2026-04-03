@@ -13,16 +13,16 @@ const members = [
 export default function TeamSectionTwo() {
     return (
         <section>
-            <div className="bg-muted/50 py-24">
+            <div className="bg-[#F8FAFC] py-24">
                 <div className="@container mx-auto w-full max-w-5xl px-6">
-                    <div className="mb-12">
-                        <h2 className="text-4xl font-semibold text-[#0F172A]">Meet the team</h2>
+                    <div className="mx-auto max-w-2xl mb-12">
+                        <h2 className="text-balance text-3xl font-bold md:text-4xl lg:text-5xl text-[#0F172A]">Meet the team</h2>
                         <p className="text-muted-foreground my-4 text-balance text-lg">
                             We're a small, focused team on a mission to make team management simpler for supervisors and employees in every industry.
                         </p>
                     </div>
 
-                    <div className="@sm:grid-cols-2 @xl:grid-cols-3 @3xl:grid-cols-4 grid gap-6 md:gap-y-10">
+                    <div className="@sm:grid-cols-2 @xl:grid-cols-3 @3xl:grid-cols-4 grid gap-6 md:gap-y-10 mx-auto max-w-2xl">
                         {members.map((member, index) => (
                             <HoverCard key={index} openDelay={300}>
                                 <HoverCardTrigger className="grid cursor-pointer grid-cols-[auto_1fr] items-center gap-2.5">
