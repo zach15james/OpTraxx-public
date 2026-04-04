@@ -1,5 +1,7 @@
-import { Outlet, Link, useLocation } from 'react-router-dom'
+import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom'
 import { useState } from 'react'
+import { signOut } from 'firebase/auth'
+import { auth } from '@/lib/firebase'
 import {
   SidebarProvider,
   Sidebar,
@@ -29,6 +31,7 @@ import logoWithText from '@/assets/OpTraxx_Logo_withText.png'
 
 export default function MainLayout() {
   const location = useLocation()
+  const navigate = useNavigate()
   const [isTeamsOpen, setIsTeamsOpen] = useState(true)
   const [isDashboardsOpen, setIsDashboardsOpen] = useState(false)
 
@@ -181,7 +184,7 @@ export default function MainLayout() {
                 <DropdownMenuItem>Profile</DropdownMenuItem>
                 <DropdownMenuItem>Settings</DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>Log out</DropdownMenuItem>
+                <DropdownMenuItem onClick={async () => { await signOut(auth); navigate('/login') }}>Log out</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>

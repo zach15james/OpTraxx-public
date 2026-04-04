@@ -24,3 +24,8 @@ dist-ssr
 *.sw?
 
 CLAUDE.md
+
+# Environment variables
+.env
+.env.local
+.env.*.local
