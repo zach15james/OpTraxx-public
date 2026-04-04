@@ -10,12 +10,12 @@ export default function ContactSectionOne() {
     return (
         <section className="bg-[#F8FAFC] py-15 sm:py-24 lg:py-32">
             <div className="mx-auto max-w-4xl px-4 lg:px-0">
-                <div className="flex justify-center mb-10">
+                <div className="flex justify-center mb-6">
                     <Logo className="h-28" />
                 </div>
                 <h1 className="text-balance text-3xl font-bold md:text-4xl lg:text-5xl text-[#0F172A] text-center">Get in touch with the team</h1>
                 <p className="text-muted-foreground mt-4 text-lg text-center">Whether you have questions about pricing, features, or getting your team set up, we're happy to help.</p>
-                <div className="mt-16 grid gap-12 lg:grid-cols-5">
+                <div className="mt-10 grid gap-12 lg:grid-cols-5">
                     <div className="grid grid-cols-2 lg:col-span-2 lg:block lg:space-y-12">
                         <div className="flex flex-col justify-between space-y-6">
                             <div>
