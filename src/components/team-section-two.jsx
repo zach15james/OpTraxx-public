@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom'
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card'
 
 const members = [
-    { src: '', name: 'Jacob Pham',    role: 'Co-Founder, CEO, & Developer' },
+    { src: '', name: 'Jacob Pham',    role: 'Co-Founder & Developer' },
     { src: '', name: 'Ethan Moak',     role: 'Co-Founder & Developer' },
     { src: '', name: 'Zach James',     role: 'Co-Founder & Developer' },
 ]
