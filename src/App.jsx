@@ -9,6 +9,12 @@ import Signup from './pages/Signup'
 import Dashboard from './pages/Dashboard'
 import Team from './pages/Team'
 import Forms from './pages/Forms'
+import TaskList from './pages/TaskList'
+import Analytics from './pages/Analytics'
+import AssignTask from './pages/AssignTask'
+import FormBuilder from './pages/FormBuilder'
+import Profile from './pages/Profile'
+import Escalations from './pages/Escalations'
 import Pricing from './pages/Pricing'
 import About from './pages/About'
 import Contact from './pages/Contact'
@@ -38,6 +44,12 @@ function App() {
                     <Route element={<ProtectedRoute />}>
                         <Route element={<MainLayout />}>
                             <Route path="/dashboard/:teamId" element={<Dashboard />} />
+                            <Route path="/tasks" element={<TaskList />} />
+                            <Route path="/analytics" element={<Analytics />} />
+                            <Route path="/assign" element={<AssignTask />} />
+                            <Route path="/form-builder" element={<FormBuilder />} />
+                            <Route path="/profile" element={<Profile />} />
+                            <Route path="/escalations" element={<Escalations />} />
                             <Route path="/team/:teamId" element={<Team />} />
                             <Route path="/forms" element={<Forms />} />
                         </Route>
