@@ -1,0 +1,1333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OpTraxx — Hi-Fi Prototype</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&family=Instrument+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --sand:#F4F0E8;--sand-dark:#EAE4D8;--sand-deeper:#DDD5C6;
+  --ink:#1A1916;--ink-soft:#38342E;--ink-muted:#75706A;--ink-faint:#B0A99F;
+  --blue:#2563eb;--blue-light:#3b82f6;--blue-pale:#EBF1FD;
+  --cyan:#0891b2;--cyan-pale:#E0F4F9;
+  --amber:#d97706;--amber-pale:#FEF3C7;
+  --emerald:#059669;--emerald-pale:#D1FAE5;
+  --red:#dc2626;--red-pale:#FEE2E2;
+  --violet:#7c3aed;--violet-pale:#EDE9FE;
+  --accent:#4A6741;--accent-light:#6B8F62;--accent-pale:#D4E0D1;
+  --border:rgba(26,25,22,0.10);--border-soft:rgba(26,25,22,0.06);
+  --shadow:0 1px 3px rgba(26,25,22,0.07),0 4px 14px rgba(26,25,22,0.05);
+  --shadow-lg:0 2px 8px rgba(26,25,22,0.09),0 16px 40px rgba(26,25,22,0.08);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Instrument Sans',sans-serif;background:var(--sand);color:var(--ink);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slideRight{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:translateX(0)}}
+.fade-in{animation:fadeUp 0.35s ease both;}
+
+/* ── PAGE SYSTEM ── */
+.page{display:none;min-height:100vh;flex-direction:column;}
+.page.active{display:flex;}
+.page-fill{display:none;min-height:100vh;flex-direction:column;}
+.page-fill.active{display:flex;}
+
+/* ── NAV ── */
+nav{position:fixed;top:0;left:0;right:0;z-index:200;background:rgba(244,240,232,0.95);backdrop-filter:blur(14px);border-bottom:1px solid var(--border);height:70px;display:flex;align-items:center;padding:0 32px;gap:0;}
+.nav-logo{cursor:pointer;margin-right:auto;display:flex;align-items:center;} .logo-text{font-family:"DM Serif Display",serif;font-size:22px;font-weight:700;letter-spacing:-0.3px;color:var(--ink);}
+.nav-logo span{color:var(--blue);font-style:italic;}
+.nav-links{display:flex;gap:2px;align-items:center;}
+.nav-link{padding:7px 13px;border-radius:7px;font-size:13px;font-weight:400;color:var(--ink-muted);cursor:pointer;transition:all 0.15s;border:none;background:none;font-family:'Instrument Sans',sans-serif;white-space:nowrap;}
+.nav-link:hover{background:var(--sand-dark);color:var(--ink);}
+.nav-link.active{background:var(--ink);color:var(--sand);font-weight:500;}
+.nav-btns{display:flex;gap:8px;margin-left:16px;}
+.nav-signin{padding:7px 14px;border-radius:7px;font-size:13px;font-weight:500;color:var(--ink-soft);cursor:pointer;border:1px solid var(--border);background:transparent;font-family:'Instrument Sans',sans-serif;transition:all 0.15s;}
+.nav-signin:hover{background:var(--sand-dark);}
+.nav-cta{padding:7px 18px;border-radius:7px;font-size:13px;font-weight:600;color:white;cursor:pointer;border:none;background:var(--blue);font-family:'Instrument Sans',sans-serif;transition:all 0.15s;}
+.nav-cta:hover{background:var(--blue-light);transform:translateY(-1px);}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 20px;border-radius:8px;font-size:13.5px;font-weight:500;border:none;cursor:pointer;font-family:'Instrument Sans',sans-serif;transition:all 0.18s;letter-spacing:0.1px;text-decoration:none;white-space:nowrap;}
+.btn-primary{background:var(--ink);color:var(--sand);}
+.btn-primary:hover{background:var(--ink-soft);transform:translateY(-1px);box-shadow:var(--shadow);}
+.btn-blue{background:var(--blue);color:white;}
+.btn-blue:hover{background:var(--blue-light);transform:translateY(-1px);box-shadow:0 4px 16px rgba(37,99,235,0.35);}
+.btn-emerald{background:var(--emerald);color:white;}
+.btn-emerald:hover{background:#047857;transform:translateY(-1px);}
+.btn-amber{background:var(--amber);color:white;}
+.btn-amber:hover{background:#b45309;transform:translateY(-1px);}
+.btn-ghost{background:transparent;color:var(--ink-soft);border:1px solid var(--border);}
+.btn-ghost:hover{background:var(--sand-dark);border-color:var(--ink-faint);}
+.btn-danger{background:var(--red-pale);color:var(--red);border:1px solid rgba(220,38,38,0.2);}
+.btn-danger:hover{background:#fecaca;}
+.btn-sm{padding:6px 13px;font-size:12.5px;border-radius:6px;}
+.btn-xs{padding:4px 10px;font-size:11.5px;border-radius:5px;}
+
+/* ── CARDS ── */
+.card{background:#FDFAF5;border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);}
+.card-inner{padding:22px 24px;}
+.card-header{padding:16px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.card-header-title{font-size:13px;font-weight:600;color:var(--ink);}
+
+/* ── TAGS ── */
+.tag{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:100px;font-size:11px;font-weight:600;font-family:'DM Mono',monospace;letter-spacing:0.2px;}
+.tag-green{background:var(--emerald-pale);color:var(--emerald);}
+.tag-red{background:var(--red-pale);color:var(--red);}
+.tag-amber{background:var(--amber-pale);color:var(--amber);}
+.tag-cyan{background:var(--cyan-pale);color:var(--cyan);}
+.tag-blue{background:var(--blue-pale);color:var(--blue);}
+.tag-violet{background:var(--violet-pale);color:var(--violet);}
+.tag-muted{background:var(--sand-dark);color:var(--ink-muted);}
+
+/* ── INPUTS ── */
+input,textarea,select{font-family:'Instrument Sans',sans-serif;font-size:13.5px;color:var(--ink);background:#FDFAF5;border:1px solid var(--border);border-radius:8px;padding:10px 13px;outline:none;transition:border-color 0.15s,box-shadow 0.15s;width:100%;}
+input:focus,textarea:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-pale);}
+label{display:block;font-size:11.5px;font-weight:600;color:var(--ink-muted);margin-bottom:5px;letter-spacing:0.4px;text-transform:uppercase;}
+.field{margin-bottom:16px;}
+textarea{resize:vertical;min-height:80px;}
+
+/* ── PROGRESS ── */
+.progress-bar{height:5px;background:var(--sand-dark);border-radius:3px;overflow:hidden;}
+.progress-fill{height:100%;background:var(--blue);border-radius:3px;transition:width 0.5s ease;}
+hr{border:none;border-top:1px solid var(--border);margin:20px 0;}
+
+/* ── APP SHELL ── */
+.app-layout{display:flex;height:100vh;padding-top:70px;}
+.sidebar{width:216px;flex-shrink:0;background:#F7F2E9;border-right:1px solid var(--border);padding:16px 10px;display:flex;flex-direction:column;gap:1px;overflow-y:auto;}
+.sidebar-section{font-size:10px;font-weight:700;color:var(--ink-faint);letter-spacing:1px;text-transform:uppercase;padding:14px 10px 5px;font-family:'DM Mono',monospace;}
+.sidebar-item{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:7px;font-size:13px;color:var(--ink-soft);cursor:pointer;transition:all 0.15s;font-weight:400;position:relative;}
+.sidebar-item:hover{background:var(--sand-dark);color:var(--ink);}
+.sidebar-item.active{background:var(--ink);color:var(--sand);font-weight:500;}
+.sidebar-item .s-icon{width:16px;text-align:center;font-size:13px;opacity:0.65;flex-shrink:0;}
+.sidebar-item.active .s-icon{opacity:1;}
+.sidebar-badge{margin-left:auto;font-size:10px;font-weight:700;padding:2px 7px;border-radius:100px;font-family:'DM Mono',monospace;background:var(--blue-pale);color:var(--blue);}
+.sidebar-item.active .sidebar-badge{background:rgba(255,255,255,0.18);color:white;}
+.sidebar-badge.red{background:var(--red-pale);color:var(--red);}
+.sidebar-item.active .sidebar-badge.red{background:rgba(255,255,255,0.18);color:#fca5a5;}
+.main-content{flex:1;overflow-y:auto;padding:28px 32px;background:var(--sand);}
+
+/* ── PAGE HEADER ── */
+.page-header{margin-bottom:24px;display:flex;align-items:flex-start;justify-content:space-between;gap:16px;}
+.page-header-left h1{font-family:'DM Serif Display',serif;font-size:24px;color:var(--ink);letter-spacing:-0.5px;margin-bottom:3px;}
+.page-header-left p{color:var(--ink-muted);font-size:13px;}
+.breadcrumb{display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--ink-faint);margin-bottom:16px;font-family:'DM Mono',monospace;}
+.breadcrumb .b-link{color:var(--ink-muted);cursor:pointer;}
+.breadcrumb .b-link:hover{color:var(--blue);}
+.breadcrumb .sep{color:var(--ink-faint);}
+
+/* ── STAT CARDS ── */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px;}
+.stat-card{padding:18px 20px;border-radius:10px;background:#FDFAF5;border:1px solid var(--border);transition:box-shadow 0.15s;}
+.stat-card:hover{box-shadow:var(--shadow);}
+.stat-card-label{font-size:11px;color:var(--ink-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;font-family:'DM Mono',monospace;}
+.stat-card-value{font-family:'DM Serif Display',serif;font-size:28px;color:var(--ink);letter-spacing:-0.8px;line-height:1;}
+.stat-card-delta{font-size:11px;color:var(--blue);margin-top:5px;font-family:'DM Mono',monospace;}
+
+/* ── SECTION TITLE ── */
+.section-title{font-size:13px;font-weight:600;color:var(--ink);margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.section-title a,.section-link{font-size:12px;color:var(--blue);text-decoration:none;font-weight:400;cursor:pointer;background:none;border:none;font-family:'Instrument Sans',sans-serif;}
+.section-title a:hover,.section-link:hover{text-decoration:underline;}
+
+/* ── TASK ITEMS ── */
+.task-list{display:flex;flex-direction:column;gap:2px;}
+.task-item{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:8px;background:#FDFAF5;border:1px solid var(--border);cursor:pointer;transition:all 0.15s;}
+.task-item:hover{border-color:rgba(37,99,235,0.25);box-shadow:var(--shadow);transform:translateY(-1px);}
+.task-check{width:18px;height:18px;border:1.5px solid var(--border);border-radius:5px;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all 0.15s;}
+.task-check.done{background:var(--emerald);border-color:var(--emerald);}
+.task-check.done::after{content:'✓';font-size:10px;color:white;}
+.task-meta{flex:1;min-width:0;}
+.task-title{font-size:13px;font-weight:500;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.task-title.done{text-decoration:line-through;color:var(--ink-faint);}
+.task-sub{font-size:11px;color:var(--ink-muted);margin-top:1px;font-family:'DM Mono',monospace;}
+.task-due{font-size:11px;color:var(--ink-muted);font-family:'DM Mono',monospace;white-space:nowrap;}
+.task-due.overdue{color:var(--red);font-weight:600;}
+
+/* ── TEAM ── */
+.team-list{display:flex;flex-direction:column;gap:2px;}
+.team-member{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;background:#FDFAF5;border:1px solid var(--border);}
+.avatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:700;flex-shrink:0;}
+.av-green{background:var(--emerald-pale);color:var(--emerald);}
+.av-amber{background:var(--amber-pale);color:var(--amber);}
+.av-blue{background:var(--blue-pale);color:var(--blue);}
+.av-cyan{background:var(--cyan-pale);color:var(--cyan);}
+.av-violet{background:var(--violet-pale);color:var(--violet);}
+.av-ink{background:var(--ink);color:var(--sand);}
+.member-name{font-size:13px;font-weight:500;flex:1;}
+.member-role{font-size:11px;color:var(--ink-muted);}
+
+/* ── ACTIVITY ── */
+.activity-list{display:flex;flex-direction:column;}
+.activity-item{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid var(--border-soft);}
+.activity-item:last-child{border-bottom:none;}
+.activity-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:5px;}
+.activity-text{font-size:12px;color:var(--ink-soft);line-height:1.5;}
+.activity-time{font-size:10.5px;color:var(--ink-faint);margin-top:1px;font-family:'DM Mono',monospace;}
+
+/* ── LOGIN ── */
+.login-wrap{display:flex;width:100%;max-width:880px;min-height:500px;border-radius:16px;overflow:hidden;border:1px solid var(--border);box-shadow:var(--shadow-lg);}
+.login-panel{flex:1;background:#FDFAF5;padding:44px 40px;display:flex;flex-direction:column;justify-content:center;}
+.login-brand{font-family:'DM Serif Display',serif;font-size:21px;letter-spacing:-0.3px;margin-bottom:32px;color:var(--ink);}
+.login-brand span{color:var(--blue);font-style:italic;}
+.login-panel h2{font-family:'DM Serif Display',serif;font-size:26px;letter-spacing:-0.5px;margin-bottom:5px;}
+.login-panel .sub{color:var(--ink-muted);font-size:13px;margin-bottom:26px;}
+.login-sidebar{width:300px;background:var(--ink);padding:44px 36px;display:flex;flex-direction:column;justify-content:center;position:relative;overflow:hidden;}
+.login-sidebar::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 280px 280px at 80% 20%,rgba(37,99,235,0.22) 0%,transparent 60%);}
+.login-sidebar h3{font-family:'DM Serif Display',serif;font-size:26px;color:var(--sand);letter-spacing:-0.5px;line-height:1.2;margin-bottom:16px;position:relative;}
+.login-sidebar p{color:var(--ink-faint);font-size:13px;line-height:1.65;position:relative;}
+.login-feats{margin-top:28px;display:flex;flex-direction:column;gap:12px;position:relative;}
+.login-feat{display:flex;align-items:center;gap:10px;color:rgba(244,240,232,0.7);font-size:13px;}
+.login-feat::before{content:'✓';width:18px;height:18px;background:var(--blue);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;color:white;flex-shrink:0;text-align:center;line-height:18px;}
+.divider-or{display:flex;align-items:center;gap:10px;font-size:11px;color:var(--ink-faint);font-family:'DM Mono',monospace;margin:14px 0;}
+.divider-or::before,.divider-or::after{content:'';flex:1;height:1px;background:var(--border);}
+
+/* ── PROFILE ── */
+.profile-header-card{padding:28px;border-radius:12px;background:#FDFAF5;border:1px solid var(--border);display:flex;align-items:center;gap:24px;margin-bottom:20px;}
+.profile-avatar{width:68px;height:68px;border-radius:50%;background:var(--ink);display:flex;align-items:center;justify-content:center;font-family:'DM Serif Display',serif;font-size:24px;color:var(--sand);flex-shrink:0;}
+.profile-name{font-family:'DM Serif Display',serif;font-size:22px;letter-spacing:-0.4px;}
+.profile-role{font-size:12.5px;color:var(--ink-muted);margin-top:2px;}
+.profile-meta{display:flex;gap:18px;margin-top:10px;}
+.profile-meta-item{font-size:12px;color:var(--ink-muted);font-family:'DM Mono',monospace;}
+.profile-meta-item strong{color:var(--ink);font-weight:600;}
+.profile-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--border-soft);}
+.toggle-row:last-child{border-bottom:none;}
+.toggle-label{font-size:13px;color:var(--ink-soft);}
+.toggle-sub{font-size:11px;color:var(--ink-faint);margin-top:1px;}
+.toggle{width:34px;height:19px;border-radius:10px;background:var(--sand-dark);cursor:pointer;position:relative;border:none;transition:background 0.2s;flex-shrink:0;}
+.toggle.on{background:var(--blue);}
+.toggle::after{content:'';position:absolute;top:2.5px;left:2.5px;width:14px;height:14px;border-radius:50%;background:white;transition:transform 0.2s;box-shadow:0 1px 3px rgba(0,0,0,0.2);}
+.toggle.on::after{transform:translateX(15px);}
+
+/* ══════════════════════════════════════
+   LANDING STYLES
+══════════════════════════════════════ */
+#landing{background:var(--sand);padding-top:70px;}
+.hero{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;position:relative;overflow:hidden;}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 800px 500px at 60% 15%,rgba(37,99,235,0.07) 0%,transparent 65%),radial-gradient(ellipse 500px 400px at 10% 80%,rgba(8,145,178,0.05) 0%,transparent 60%);pointer-events:none;}
+.hero-inner{position:relative;z-index:1;padding:96px 40px 0;max-width:1060px;width:100%;margin:0 auto;display:flex;flex-direction:column;align-items:center;}
+.hero-eyebrow{display:inline-flex;align-items:center;gap:7px;background:var(--blue-pale);color:var(--blue);font-size:10.5px;font-weight:700;padding:4px 13px;border-radius:100px;letter-spacing:0.8px;text-transform:uppercase;font-family:'DM Mono',monospace;margin-bottom:24px;border:1px solid rgba(37,99,235,0.15);animation:fadeUp 0.5s ease both;}
+.hero-eyebrow::before{content:'●';font-size:6px;}
+.hero h1{font-family:'DM Serif Display',serif;font-size:clamp(44px,6vw,74px);line-height:1.04;letter-spacing:-2px;color:var(--ink);max-width:800px;margin-bottom:22px;animation:fadeUp 0.5s 0.08s ease both;}
+.hero h1 em{font-style:italic;color:var(--blue);}
+.hero-sub{font-size:16px;color:var(--ink-muted);max-width:480px;line-height:1.7;margin-bottom:36px;font-weight:300;animation:fadeUp 0.5s 0.16s ease both;}
+.hero-actions{display:flex;gap:10px;align-items:center;animation:fadeUp 0.5s 0.24s ease both;}
+.hero-stats-strip{width:100%;display:flex;justify-content:center;margin-top:72px;border-top:1px solid var(--border);animation:fadeUp 0.5s 0.32s ease both;}
+.hero-stats-inner{display:flex;max-width:560px;width:100%;}
+.hero-stat{flex:1;text-align:center;padding:24px 16px;border-right:1px solid var(--border);}
+.hero-stat:last-child{border-right:none;}
+.hero-stat-num{font-family:'DM Serif Display',serif;font-size:33px;color:var(--ink);letter-spacing:-1.5px;display:block;line-height:1;}
+.hero-stat-label{font-size:11px;color:var(--ink-faint);margin-top:4px;font-family:'DM Mono',monospace;letter-spacing:0.3px;}
+
+.preview-section{background:var(--sand-dark);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:64px 40px;overflow:hidden;}
+.preview-label{text-align:center;font-family:'DM Mono',monospace;font-size:10.5px;color:var(--ink-faint);letter-spacing:1px;text-transform:uppercase;margin-bottom:28px;}
+.browser-chrome{max-width:960px;margin:0 auto;border-radius:12px;overflow:hidden;border:1px solid var(--border);box-shadow:var(--shadow-lg);background:#FDFAF5;}
+.browser-bar{background:var(--sand-deeper);padding:9px 14px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--border);}
+.browser-dots{display:flex;gap:5px;}
+.browser-dot{width:10px;height:10px;border-radius:50%;}
+.browser-url{flex:1;background:var(--sand);border-radius:4px;padding:4px 10px;font-family:'DM Mono',monospace;font-size:11px;color:var(--ink-muted);margin:0 10px;}
+.browser-body{padding:20px;}
+.mini-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px;}
+.mini-stat{background:var(--sand);border:1px solid var(--border);border-radius:8px;padding:12px 14px;}
+.mini-stat-val{font-family:'DM Serif Display',serif;font-size:24px;letter-spacing:-0.8px;line-height:1;margin-bottom:2px;}
+.mini-stat-label{font-family:'DM Mono',monospace;font-size:10px;color:var(--ink-faint);}
+.mini-tasks{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.mini-task{background:var(--sand);border:1px solid var(--border);border-radius:7px;padding:10px 12px;display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.mini-task-name{font-size:11.5px;font-weight:500;color:var(--ink);}
+.mini-task-emp{font-size:10.5px;color:var(--ink-muted);margin-top:1px;font-family:'DM Mono',monospace;}
+.mini-tag{font-family:'DM Mono',monospace;font-size:10px;font-weight:600;padding:2px 8px;border-radius:100px;white-space:nowrap;flex-shrink:0;}
+
+.logos-strip{background:var(--sand);border-bottom:1px solid var(--border);padding:16px 40px;}
+.logos-inner{max-width:960px;margin:0 auto;display:flex;align-items:center;justify-content:center;gap:0;}
+.logos-label{font-family:'DM Mono',monospace;font-size:10.5px;color:var(--ink-faint);letter-spacing:0.5px;white-space:nowrap;margin-right:28px;text-transform:uppercase;}
+.logos-list{display:flex;gap:30px;}
+.logo-name{font-size:12.5px;font-weight:600;color:var(--ink-faint);}
+
+.features-section{padding:80px 40px;background:var(--sand);}
+.features-inner{max-width:1060px;margin:0 auto;}
+.section-eyebrow{display:inline-flex;align-items:center;gap:6px;font-family:'DM Mono',monospace;font-size:10.5px;font-weight:600;letter-spacing:0.8px;text-transform:uppercase;color:var(--ink-faint);margin-bottom:16px;}
+.section-eyebrow::before{content:'—';}
+.features-section h2{font-family:'DM Serif Display',serif;font-size:clamp(30px,4vw,46px);letter-spacing:-1px;color:var(--ink);max-width:500px;margin-bottom:10px;line-height:1.1;}
+.features-section h2 em{font-style:italic;color:var(--blue);}
+.features-intro{color:var(--ink-muted);font-size:14.5px;max-width:400px;line-height:1.7;font-weight:300;margin-bottom:48px;}
+.features-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+.feature-card{padding:24px 22px;border-radius:12px;background:#FDFAF5;border:1px solid var(--border);box-shadow:var(--shadow);transition:all 0.2s;}
+.feature-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg);}
+.feature-icon-wrap{width:38px;height:38px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:14px;}
+.feature-card h3{font-size:14.5px;font-weight:600;margin-bottom:7px;color:var(--ink);letter-spacing:-0.2px;}
+.feature-card p{font-size:12.5px;color:var(--ink-muted);line-height:1.65;font-weight:300;}
+.feature-tag{display:inline-block;margin-top:14px;font-family:'DM Mono',monospace;font-size:10px;font-weight:600;padding:2px 9px;border-radius:100px;letter-spacing:0.4px;}
+
+.how{background:#EEEAE0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:80px 40px;}
+.how-inner{max-width:920px;margin:0 auto;display:grid;grid-template-columns:1fr 2fr;gap:72px;align-items:start;}
+.how h2{font-family:'DM Serif Display',serif;font-size:clamp(28px,3.5vw,42px);letter-spacing:-0.8px;line-height:1.1;margin-bottom:12px;}
+.how h2 em{font-style:italic;color:var(--cyan);}
+.how-sub{font-size:13.5px;color:var(--ink-muted);line-height:1.7;font-weight:300;margin-bottom:24px;}
+.how-steps{display:flex;flex-direction:column;}
+.how-step{display:flex;gap:20px;padding:24px 0;border-bottom:1px solid var(--border);}
+.how-step:last-child{border-bottom:none;}
+.how-step-num{font-family:'DM Serif Display',serif;font-size:28px;color:var(--ink-faint);letter-spacing:-1px;line-height:1;flex-shrink:0;width:36px;padding-top:2px;}
+.how-step h4{font-size:14px;font-weight:600;margin-bottom:5px;color:var(--ink);}
+.how-step p{font-size:12.5px;color:var(--ink-muted);line-height:1.65;font-weight:300;}
+
+.testimonials{background:#EEEAE0;border-top:1px solid var(--border);padding:80px 40px;}
+.testimonials-inner{max-width:1060px;margin:0 auto;}
+.testimonials h2{font-family:'DM Serif Display',serif;font-size:clamp(26px,3.5vw,40px);letter-spacing:-0.8px;margin-bottom:40px;text-align:center;}
+.testimonials-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+.testimonial{background:#FDFAF5;border:1px solid var(--border);border-radius:12px;padding:26px 24px;box-shadow:var(--shadow);}
+.testimonial-stars{display:flex;gap:2px;margin-bottom:14px;color:var(--amber);font-size:12px;}
+.testimonial-quote{font-family:'DM Serif Display',serif;font-size:15px;line-height:1.6;color:var(--ink-soft);margin-bottom:20px;font-style:italic;letter-spacing:-0.1px;}
+.testimonial-author{display:flex;align-items:center;gap:10px;}
+.t-avatar{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;}
+.testimonial-name{font-size:13px;font-weight:600;color:var(--ink);}
+.testimonial-role{font-size:11px;color:var(--ink-muted);font-family:'DM Mono',monospace;margin-top:1px;}
+
+.pricing{padding:80px 40px;background:var(--sand);border-top:1px solid var(--border);}
+.pricing-inner{max-width:860px;margin:0 auto;}
+.pricing h2{font-family:'DM Serif Display',serif;font-size:clamp(28px,3.5vw,42px);letter-spacing:-1px;text-align:center;margin-bottom:6px;}
+.pricing-sub{text-align:center;font-size:13.5px;color:var(--ink-muted);font-weight:300;margin-bottom:44px;}
+.pricing-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+.pricing-card{background:#FDFAF5;border:1px solid var(--border);border-radius:12px;padding:28px 24px;box-shadow:var(--shadow);transition:all 0.2s;position:relative;}
+.pricing-card:hover{box-shadow:var(--shadow-lg);}
+.pricing-card.featured{background:var(--ink);border-color:var(--ink);color:var(--sand);}
+.pricing-card.featured .pricing-price,.pricing-card.featured .pricing-name{color:var(--sand);}
+.pricing-card.featured .pricing-desc,.pricing-card.featured .pricing-item{color:rgba(244,240,232,0.65);}
+.pricing-card.featured .pricing-divider{background:rgba(244,240,232,0.1);}
+.pricing-badge{position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:var(--blue);color:white;font-family:'DM Mono',monospace;font-size:10px;font-weight:600;padding:3px 11px;border-radius:100px;letter-spacing:0.5px;white-space:nowrap;}
+.pricing-name{font-family:'DM Mono',monospace;font-size:11px;font-weight:600;letter-spacing:0.8px;text-transform:uppercase;color:var(--ink-muted);margin-bottom:10px;}
+.pricing-price{font-family:'DM Serif Display',serif;font-size:38px;letter-spacing:-2px;color:var(--ink);line-height:1;margin-bottom:3px;}
+.pricing-price sup{font-size:18px;vertical-align:top;margin-top:7px;letter-spacing:0;}
+.pricing-period{font-size:11.5px;color:var(--ink-faint);font-family:'DM Mono',monospace;margin-bottom:16px;}
+.pricing-desc{font-size:12.5px;color:var(--ink-muted);line-height:1.6;margin-bottom:18px;font-weight:300;}
+.pricing-divider{height:1px;background:var(--border);margin-bottom:16px;}
+.pricing-items{display:flex;flex-direction:column;gap:9px;margin-bottom:24px;}
+.pricing-item{display:flex;align-items:flex-start;gap:8px;font-size:12.5px;color:var(--ink-soft);}
+.pricing-item::before{content:'✓';color:var(--emerald);font-size:10px;background:var(--emerald-pale);width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:700;margin-top:1px;}
+.pricing-card.featured .pricing-item::before{background:rgba(5,150,105,0.2);color:#34d399;}
+
+.cta-strip{background:var(--ink);padding:72px 40px;text-align:center;position:relative;overflow:hidden;}
+.cta-strip::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 500px 350px at 30% 50%,rgba(37,99,235,0.18) 0%,transparent 60%),radial-gradient(ellipse 400px 280px at 75% 50%,rgba(8,145,178,0.12) 0%,transparent 60%);pointer-events:none;}
+.cta-inner{position:relative;z-index:1;max-width:620px;margin:0 auto;}
+.cta-strip h2{font-family:'DM Serif Display',serif;font-size:clamp(30px,4vw,48px);letter-spacing:-1px;color:var(--sand);margin-bottom:12px;line-height:1.05;}
+.cta-strip h2 em{font-style:italic;color:#93c5fd;}
+.cta-strip p{font-size:15px;color:rgba(244,240,232,0.5);margin-bottom:32px;line-height:1.7;font-weight:300;}
+.cta-note{margin-top:14px;font-family:'DM Mono',monospace;font-size:11px;color:rgba(244,240,232,0.25);letter-spacing:0.3px;}
+
+footer{background:var(--sand-dark);border-top:1px solid var(--border);padding:44px 40px 32px;}
+.footer-inner{max-width:1060px;margin:0 auto;display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:44px;margin-bottom:36px;}
+.footer-brand{font-family:'DM Serif Display',serif;font-size:17px;letter-spacing:-0.3px;color:var(--ink);margin-bottom:8px;}
+.footer-brand span{color:var(--blue);font-style:italic;}
+.footer-tagline{font-size:12.5px;color:var(--ink-muted);line-height:1.65;font-weight:300;max-width:220px;}
+.footer-col-title{font-family:'DM Mono',monospace;font-size:10px;font-weight:600;letter-spacing:0.8px;text-transform:uppercase;color:var(--ink-muted);margin-bottom:12px;}
+.footer-links{display:flex;flex-direction:column;gap:7px;}
+.footer-link{font-size:13px;color:var(--ink-soft);cursor:pointer;transition:color 0.15s;text-decoration:none;}
+.footer-link:hover{color:var(--blue);}
+.footer-bottom{max-width:1060px;margin:0 auto;border-top:1px solid var(--border);padding-top:18px;display:flex;justify-content:space-between;align-items:center;}
+.footer-copy{font-family:'DM Mono',monospace;font-size:11px;color:var(--ink-faint);}
+.footer-bottom-links{display:flex;gap:16px;}
+.footer-bottom-link{font-size:11.5px;color:var(--ink-faint);cursor:pointer;text-decoration:none;transition:color 0.15s;}
+.footer-bottom-link:hover{color:var(--ink-soft);}
+
+/* ══════════════════════════════════════
+   MVP SCREEN EXTRAS
+══════════════════════════════════════ */
+
+/* TASK LIST FILTERS */
+.filter-bar{display:flex;gap:6px;margin-bottom:20px;flex-wrap:wrap;align-items:center;}
+.filter-pill{padding:6px 14px;border-radius:100px;font-size:12.5px;font-weight:500;border:1.5px solid var(--border);background:#FDFAF5;color:var(--ink-muted);cursor:pointer;transition:all 0.15s;font-family:'Instrument Sans',sans-serif;}
+.filter-pill:hover{border-color:var(--blue);color:var(--blue);}
+.filter-pill.active{background:var(--ink);border-color:var(--ink);color:var(--sand);}
+.filter-pill.active-blue{background:var(--blue-pale);border-color:var(--blue);color:var(--blue);}
+.search-input-wrap{position:relative;flex:1;max-width:260px;}
+.search-input-wrap input{padding-left:34px;}
+.search-icon{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--ink-faint);font-size:13px;pointer-events:none;}
+
+/* FULL TASK ROW */
+.task-row{display:grid;grid-template-columns:1fr 140px 110px 100px 100px 80px;gap:10px;align-items:center;padding:12px 16px;border-radius:8px;background:#FDFAF5;border:1px solid var(--border);cursor:pointer;transition:all 0.15s;margin-bottom:2px;}
+.task-row:hover{border-color:rgba(37,99,235,0.25);box-shadow:var(--shadow);transform:translateY(-1px);}
+.task-row-head{display:grid;grid-template-columns:1fr 140px 110px 100px 100px 80px;gap:10px;align-items:center;padding:8px 16px;margin-bottom:4px;}
+.col-label{font-family:'DM Mono',monospace;font-size:10.5px;font-weight:600;color:var(--ink-faint);letter-spacing:0.5px;text-transform:uppercase;}
+.task-row-name{font-size:13px;font-weight:500;color:var(--ink);}
+.task-row-sub{font-size:11px;color:var(--ink-muted);font-family:'DM Mono',monospace;margin-top:1px;}
+
+/* FORM BUILDER */
+.fb-layout{display:grid;grid-template-columns:220px 1fr 240px;height:100%;overflow:hidden;}
+.fb-panel{border-right:1px solid var(--border);overflow-y:auto;background:#F7F2E9;}
+.fb-panel-right{border-left:1px solid var(--border);background:#F7F2E9;}
+.fb-canvas{overflow-y:auto;background:var(--sand);padding:24px;}
+.fb-panel-title{font-family:'DM Mono',monospace;font-size:10.5px;font-weight:700;color:var(--ink-faint);letter-spacing:0.8px;text-transform:uppercase;padding:14px 16px 8px;}
+.field-type-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:0 12px 12px;}
+.field-type-btn{padding:9px 6px;border-radius:8px;border:1.5px solid var(--border);background:#FDFAF5;cursor:pointer;font-size:11.5px;color:var(--ink-muted);text-align:center;transition:all 0.15s;font-family:'Instrument Sans',sans-serif;font-weight:500;}
+.field-type-btn:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-pale);}
+.canvas-form{max-width:560px;margin:0 auto;}
+.canvas-form-title{font-family:'DM Serif Display',serif;font-size:22px;letter-spacing:-0.5px;margin-bottom:6px;}
+.canvas-form-desc{font-size:13px;color:var(--ink-muted);margin-bottom:24px;}
+.form-field-block{padding:14px 16px;border-radius:9px;border:1.5px solid var(--border);background:#FDFAF5;margin-bottom:8px;cursor:pointer;transition:all 0.15s;position:relative;}
+.form-field-block:hover,.form-field-block.selected{border-color:var(--blue);background:rgba(37,99,235,0.03);}
+.form-field-block.selected{box-shadow:0 0 0 3px var(--blue-pale);}
+.field-block-label{font-size:11.5px;font-weight:600;color:var(--ink);margin-bottom:6px;display:flex;align-items:center;gap:6px;}
+.field-block-label .required{color:var(--red);font-size:13px;}
+.field-block-type{font-family:'DM Mono',monospace;font-size:10px;color:var(--ink-faint);margin-bottom:6px;}
+.field-block-preview{height:32px;background:var(--sand);border:1px solid var(--border);border-radius:6px;}
+.field-drop-zone{padding:20px;border-radius:9px;border:2px dashed var(--border);text-align:center;font-size:12.5px;color:var(--ink-faint);margin-top:8px;transition:all 0.15s;cursor:pointer;}
+.field-drop-zone:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-pale);}
+.prop-row{padding:12px 16px;border-bottom:1px solid var(--border-soft);}
+.prop-label{font-size:11px;font-weight:600;color:var(--ink-muted);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:5px;font-family:'DM Mono',monospace;}
+.template-pill{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-radius:7px;border:1px solid var(--border);background:#FDFAF5;margin:0 12px 6px;cursor:pointer;font-size:12.5px;color:var(--ink-soft);transition:all 0.15s;}
+.template-pill:hover{border-color:var(--blue);color:var(--blue);}
+
+/* ANALYTICS */
+.chart-bar-wrap{display:flex;align-items:flex-end;gap:8px;height:120px;padding-bottom:4px;}
+.chart-bar-col{display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;}
+.chart-bar{width:100%;border-radius:4px 4px 0 0;min-height:4px;transition:height 0.4s ease;}
+.chart-bar-label{font-family:'DM Mono',monospace;font-size:10px;color:var(--ink-faint);}
+.chart-legend{display:flex;gap:16px;margin-top:10px;}
+.chart-legend-item{display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--ink-muted);}
+.chart-legend-dot{width:9px;height:9px;border-radius:2px;}
+.ring-wrap{position:relative;display:inline-flex;align-items:center;justify-content:center;}
+.ring-center{position:absolute;text-align:center;}
+.ring-center-val{font-family:'DM Serif Display',serif;font-size:22px;letter-spacing:-0.8px;color:var(--ink);line-height:1;}
+.ring-center-label{font-family:'DM Mono',monospace;font-size:9.5px;color:var(--ink-faint);margin-top:1px;}
+
+.perf-row{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--border-soft);}
+.perf-row:last-child{border-bottom:none;}
+.perf-name{font-size:13px;font-weight:500;width:90px;flex-shrink:0;}
+.perf-bar-wrap{flex:1;}
+.perf-bar{height:6px;background:var(--sand-dark);border-radius:3px;overflow:hidden;}
+.perf-fill{height:100%;border-radius:3px;}
+.perf-pct{font-family:'DM Mono',monospace;font-size:11.5px;font-weight:600;width:38px;text-align:right;flex-shrink:0;}
+
+/* TASK COMPLETION FORM */
+.form-progress-header{background:#FDFAF5;border:1px solid var(--border);border-radius:12px;padding:20px 24px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;gap:20px;}
+.form-steps-wrap{display:flex;align-items:center;gap:0;flex:1;}
+.form-step{display:flex;align-items:center;gap:8px;}
+.form-step-circle{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:700;flex-shrink:0;transition:all 0.2s;}
+.fsc-done{background:var(--emerald);color:white;}
+.fsc-active{background:var(--blue);color:white;box-shadow:0 0 0 3px var(--blue-pale);}
+.fsc-todo{background:var(--sand-dark);color:var(--ink-faint);}
+.form-step-label{font-size:12px;font-weight:500;white-space:nowrap;}
+.form-step-connector{width:32px;height:2px;margin:0 4px;flex-shrink:0;}
+.checklist-item{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border-soft);cursor:pointer;}
+.checklist-item:last-child{border-bottom:none;}
+.checklist-box{width:20px;height:20px;border-radius:5px;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.15s;}
+.checklist-box.checked{background:var(--emerald);border-color:var(--emerald);}
+.checklist-box.checked::after{content:'✓';font-size:11px;color:white;}
+.checklist-text{font-size:13px;color:var(--ink);}
+.checklist-text.checked{text-decoration:line-through;color:var(--ink-faint);}
+.sig-area{height:88px;border:2px dashed var(--border);border-radius:8px;background:var(--sand);display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--ink-faint);cursor:pointer;transition:all 0.15s;}
+.sig-area:hover{border-color:var(--blue);color:var(--blue);}
+
+/* TASK ASSIGNMENT */
+.assign-steps{display:flex;gap:0;border-bottom:1px solid var(--border);background:#FDFAF5;border-radius:12px 12px 0 0;overflow:hidden;}
+.assign-step-tab{flex:1;padding:14px 16px;text-align:center;font-size:13px;font-weight:500;color:var(--ink-muted);cursor:pointer;border-right:1px solid var(--border);transition:all 0.15s;position:relative;}
+.assign-step-tab:last-child{border-right:none;}
+.assign-step-tab:hover{background:var(--sand);}
+.assign-step-tab.active{background:var(--sand);color:var(--blue);font-weight:600;}
+.assign-step-tab.done{color:var(--emerald);}
+.assign-step-tab.active::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--blue);}
+.assign-step-num{display:inline-flex;width:20px;height:20px;border-radius:50%;background:var(--sand-dark);align-items:center;justify-content:center;font-size:10.5px;font-weight:700;margin-right:6px;transition:all 0.2s;}
+.assign-step-tab.active .assign-step-num{background:var(--blue);color:white;}
+.assign-step-tab.done .assign-step-num{background:var(--emerald);color:white;}
+.assign-body{background:#FDFAF5;border:1px solid var(--border);border-top:none;border-radius:0 0 12px 12px;padding:24px;}
+.assignee-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;}
+.assignee-card{padding:12px 14px;border-radius:9px;border:2px solid var(--border);background:var(--sand);cursor:pointer;transition:all 0.15s;display:flex;align-items:center;gap:10px;}
+.assignee-card:hover{border-color:rgba(37,99,235,0.3);}
+.assignee-card.selected{border-color:var(--blue);background:var(--blue-pale);}
+.assignee-card.selected .assignee-check{background:var(--blue);border-color:var(--blue);}
+.assignee-card.selected .assignee-check::after{content:'✓';font-size:10px;color:white;}
+.assignee-check{width:18px;height:18px;border-radius:50%;border:2px solid var(--border);margin-left:auto;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all 0.15s;}
+.assignee-name{font-size:13px;font-weight:500;color:var(--ink);}
+.assignee-role{font-size:11px;color:var(--ink-muted);font-family:'DM Mono',monospace;}
+.priority-btns{display:flex;gap:8px;}
+.priority-btn{flex:1;padding:10px;border-radius:8px;border:2px solid var(--border);background:var(--sand);cursor:pointer;font-size:12.5px;font-weight:600;text-align:center;transition:all 0.15s;font-family:'Instrument Sans',sans-serif;}
+.priority-btn:hover{border-color:var(--ink-faint);}
+.priority-btn.sel-low{border-color:var(--emerald);background:var(--emerald-pale);color:var(--emerald);}
+.priority-btn.sel-med{border-color:var(--amber);background:var(--amber-pale);color:var(--amber);}
+.priority-btn.sel-high{border-color:var(--red);background:var(--red-pale);color:var(--red);}
+.recur-btns{display:flex;gap:6px;}
+.recur-btn{padding:8px 14px;border-radius:7px;border:1.5px solid var(--border);background:#FDFAF5;cursor:pointer;font-size:12.5px;font-weight:500;transition:all 0.15s;font-family:'Instrument Sans',sans-serif;color:var(--ink-muted);}
+.recur-btn:hover{border-color:var(--ink-faint);color:var(--ink);}
+.recur-btn.active{background:var(--ink);border-color:var(--ink);color:var(--sand);}
+.notif-check{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border-soft);cursor:pointer;}
+.notif-check:last-child{border-bottom:none;}
+.notif-check input[type=checkbox]{width:16px;height:16px;accent-color:var(--blue);cursor:pointer;flex-shrink:0;}
+.notif-check-label{font-size:13px;color:var(--ink-soft);}
+.notif-check-sub{font-size:11.5px;color:var(--ink-faint);}
+.assign-summary{background:var(--blue-pale);border:1.5px solid rgba(37,99,235,0.2);border-radius:10px;padding:16px 18px;}
+.summary-row{display:flex;justify-content:space-between;align-items:center;font-size:12.5px;padding:4px 0;}
+.summary-label{color:var(--ink-muted);}
+.summary-val{font-weight:600;color:var(--ink);}
+</style>
+</head>
+<body>
+
+<!-- ═══ NAV ═══════════════════════════════════════════════════════════ -->
+<nav>
+  <div class="nav-logo" onclick="showPage('landing')" style="display:flex;align-items:center;"><span class="logo-text">OpTraxx</span></div>
+  <div class="nav-links" id="main-nav">
+    <button class="nav-link" onclick="navScrollTo('features')">Features</button>
+    <button class="nav-link" onclick="navScrollTo('how')">How it works</button>
+    <button class="nav-link" onclick="navScrollTo('pricing')">Pricing</button>
+  </div>
+  <div class="nav-btns" id="nav-btns">
+    <button class="nav-signin" onclick="showPage('login')">Sign in</button>
+    <button class="nav-cta" onclick="showPage('login')">Get started</button>
+  </div>
+</nav>
+
+
+<!-- ════════════════════════════════════════════════════════════════════
+     LANDING PAGE
+════════════════════════════════════════════════════════════════════ -->
+<div id="landing" class="page active">
+  <section class="hero">
+    <div class="hero-inner">
+      <div class="hero-eyebrow">Operational task management</div>
+      <h1>Your team runs<br>on <em>accountability.</em></h1>
+      <p class="hero-sub">OpTraxx gives supervisors complete control — assign custom digital forms, track completion in real time, and keep every member of your team accountable.</p>
+      <div class="hero-actions">
+        <button class="btn btn-blue" style="font-size:14px;padding:11px 26px;" onclick="showPage('login')">Start free trial <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button>
+        <button class="btn btn-ghost" style="font-size:13.5px;" onclick="showApp('dashboard')">View live demo</button>
+      </div>
+      <div class="hero-stats-strip">
+        <div class="hero-stats-inner">
+          <div class="hero-stat"><span class="hero-stat-num">4.8k+</span><div class="hero-stat-label">Teams using OpTraxx</div></div>
+          <div class="hero-stat"><span class="hero-stat-num">98%</span><div class="hero-stat-label">On-time task rate</div></div>
+          <div class="hero-stat"><span class="hero-stat-num">3 min</span><div class="hero-stat-label">Avg. setup time</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="preview-section">
+    <div class="preview-label">Live dashboard preview</div>
+    <div class="browser-chrome">
+      <div class="browser-bar">
+        <div class="browser-dots"><div class="browser-dot" style="background:#dc2626"></div><div class="browser-dot" style="background:#d97706"></div><div class="browser-dot" style="background:#059669"></div></div>
+        <div class="browser-url">app.optraxx.io/dashboard</div>
+      </div>
+      <div class="browser-body">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+          <div><div style="font-family:'DM Serif Display',serif;font-size:18px;letter-spacing:-0.4px;">Good morning, J. Smith</div><div style="font-size:11px;color:var(--ink-muted);font-family:'DM Mono',monospace;margin-top:1px;">Tuesday, March 10 — Engineering Operations</div></div>
+          <button class="btn btn-blue btn-sm" onclick="showApp('dashboard')">Open Dashboard →</button>
+        </div>
+        <div class="mini-stats">
+          <div class="mini-stat"><div class="mini-stat-val" style="color:var(--ink);">48</div><div class="mini-stat-label">Total Tasks</div></div>
+          <div class="mini-stat"><div class="mini-stat-val" style="color:var(--emerald);">31</div><div class="mini-stat-label">Completed</div></div>
+          <div class="mini-stat"><div class="mini-stat-val" style="color:var(--red);">5</div><div class="mini-stat-label">Overdue</div></div>
+          <div class="mini-stat"><div class="mini-stat-val" style="color:var(--amber);">7</div><div class="mini-stat-label">Pending Review</div></div>
+        </div>
+        <div class="mini-tasks">
+          <div class="mini-task"><div><div class="mini-task-name">Bug Report Form — Auth Service</div><div class="mini-task-emp">A. Patel · Due today</div></div><span class="mini-tag" style="background:var(--emerald-pale);color:var(--emerald);">Completed</span></div>
+          <div class="mini-task"><div><div class="mini-task-name">Server Deployment</div><div class="mini-task-emp">J. Kim · Due today</div></div><span class="mini-tag" style="background:var(--cyan-pale);color:var(--cyan);">In Progress</span></div>
+          <div class="mini-task"><div><div class="mini-task-name">Database Migration</div><div class="mini-task-emp">M. Rivera · Mar 8</div></div><span class="mini-tag" style="background:var(--red-pale);color:var(--red);">Overdue</span></div>
+          <div class="mini-task"><div><div class="mini-task-name">Sprint Handover Log</div><div class="mini-task-emp">All Team · Mar 11</div></div><span class="mini-tag" style="background:var(--amber-pale);color:var(--amber);">Pending</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="logos-strip">
+    <div class="logos-inner"><span class="logos-label">Trusted by teams at</span><div class="logos-list"><span class="logo-name">Apex Logistics</span><span class="logo-name">SteelCore Mfg</span><span class="logo-name">HarborOps</span><span class="logo-name">CityGrid Utilities</span><span class="logo-name">ProBuild Group</span></div></div>
+  </div>
+
+  <section class="features-section" id="features">
+    <div class="features-inner">
+      <div class="section-eyebrow">Core features</div>
+      <h2>Everything your<br>operation <em>needs</em></h2>
+      <p class="features-intro">Purpose-built for supervisors managing field, warehouse, or service teams — not a generic project tracker.</p>
+      <div class="features-grid">
+        <div class="feature-card" onclick="showApp('formbuilder')" style="cursor:pointer;"><div class="feature-icon-wrap" style="background:var(--blue-pale);">📋</div><h3>Drag &amp; Drop Form Builder</h3><p>Build any form in minutes. Checklists, signatures, dropdowns — all configurable. Click to explore →</p><span class="feature-tag" style="background:var(--blue-pale);color:var(--blue);">Builder</span></div>
+        <div class="feature-card" onclick="showApp('assign')" style="cursor:pointer;"><div class="feature-icon-wrap" style="background:var(--cyan-pale);">📤</div><h3>Task Assignment</h3><p>Assign forms to individuals or teams with priority, due dates, and recurrence built in. Click to explore →</p><span class="feature-tag" style="background:var(--cyan-pale);color:var(--cyan);">Assignment</span></div>
+        <div class="feature-card" onclick="showApp('tasks')" style="cursor:pointer;"><div class="feature-icon-wrap" style="background:var(--amber-pale);">☑️</div><h3>Task Completion Forms</h3><p>Employees fill out and submit structured forms from any device with review-before-submit. Click to explore →</p><span class="feature-tag" style="background:var(--amber-pale);color:var(--amber);">Completion</span></div>
+        <div class="feature-card" onclick="showApp('analytics')" style="cursor:pointer;"><div class="feature-icon-wrap" style="background:var(--emerald-pale);">📊</div><h3>Real-Time Analytics</h3><p>See completion rates, individual performance, and overdue escalations at a glance. Click to explore →</p><span class="feature-tag" style="background:var(--emerald-pale);color:var(--emerald);">Insights</span></div>
+        <div class="feature-card"><div class="feature-icon-wrap" style="background:var(--violet-pale);">🛡️</div><h3>Full Audit Trail</h3><p>Every submission logged with name, timestamp, and review status. Exportable as PDF or CSV.</p><span class="feature-tag" style="background:var(--violet-pale);color:var(--violet);">Compliance</span></div>
+        <div class="feature-card"><div class="feature-icon-wrap" style="background:var(--red-pale);">🔔</div><h3>Smart Escalations</h3><p>Overdue tasks automatically surface to management. The system follows up so nothing slips.</p><span class="feature-tag" style="background:var(--red-pale);color:var(--red);">Alerts</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="how" id="how">
+    <div class="how-inner">
+      <div>
+        <div class="section-eyebrow">Process</div>
+        <h2>Up and running in <em>3 steps</em></h2>
+        <p class="how-sub">No IT department needed. Most teams are fully set up within an afternoon.</p>
+        <button class="btn btn-primary" onclick="showPage('login')">Get started free</button>
+      </div>
+      <div class="how-steps">
+        <div class="how-step"><div class="how-step-num">01</div><div><h4>Build your forms</h4><p>Use the drag-and-drop builder to create any form — checklists, incident reports, inspections. Save as templates for reuse.</p></div></div>
+        <div class="how-step"><div class="how-step-num">02</div><div><h4>Assign to your team</h4><p>Select employees or groups, set priority and due dates, configure recurrence, and send. Notifications go out instantly.</p></div></div>
+        <div class="how-step"><div class="how-step-num">03</div><div><h4>Track, review &amp; export</h4><p>Watch completions live. Approve or reject submissions and export full audit reports to PDF or CSV.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="testimonials">
+    <div class="testimonials-inner">
+      <h2>What supervisors are saying</h2>
+      <div class="testimonials-grid">
+        <div class="testimonial"><div class="testimonial-stars">★★★★★</div><div class="testimonial-quote">"We used to chase down paper logs every day. Now I get a notification the moment something is overdue."</div><div class="testimonial-author"><div class="t-avatar" style="background:var(--blue-pale);color:var(--blue);">JK</div><div><div class="testimonial-name">Marcus T.</div><div class="testimonial-role">Warehouse Supervisor · Apex Logistics</div></div></div></div>
+        <div class="testimonial"><div class="testimonial-stars">★★★★★</div><div class="testimonial-quote">"Built our entire inspection workflow in under an hour. Compliance audits are a completely different experience."</div><div class="testimonial-author"><div class="t-avatar" style="background:var(--cyan-pale);color:var(--cyan);">PR</div><div><div class="testimonial-name">Priya R.</div><div class="testimonial-role">Operations Manager · SteelCore Mfg</div></div></div></div>
+        <div class="testimonial"><div class="testimonial-stars">★★★★★</div><div class="testimonial-quote">"My team adopted it in days because it actually looks modern. Zero training needed."</div><div class="testimonial-author"><div class="t-avatar" style="background:var(--emerald-pale);color:var(--emerald);">DO</div><div><div class="testimonial-name">Derek O.</div><div class="testimonial-role">Field Supervisor · ProBuild Group</div></div></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="pricing" id="pricing">
+    <div class="pricing-inner">
+      <div class="section-eyebrow" style="display:block;text-align:center;margin-bottom:16px;">Pricing</div>
+      <h2>Simple, honest pricing</h2>
+      <p class="pricing-sub">No hidden fees. No per-feature add-ons. Cancel any time.</p>
+      <div class="pricing-grid">
+        <div class="pricing-card"><div class="pricing-name">Starter</div><div class="pricing-price"><sup>$</sup>0</div><div class="pricing-period">Free forever</div><div class="pricing-desc">For small teams getting started.</div><div class="pricing-divider"></div><div class="pricing-items"><div class="pricing-item">Up to 5 team members</div><div class="pricing-item">3 active form templates</div><div class="pricing-item">Basic task assignment</div><div class="pricing-item">7-day task history</div></div><button class="btn btn-ghost" style="width:100%;justify-content:center;" onclick="showPage('login')">Get started free</button></div>
+        <div class="pricing-card featured"><div class="pricing-badge">Most popular</div><div class="pricing-name">Professional</div><div class="pricing-price"><sup>$</sup>29</div><div class="pricing-period">Per supervisor / month</div><div class="pricing-desc">For growing teams who need full accountability.</div><div class="pricing-divider"></div><div class="pricing-items"><div class="pricing-item">Unlimited team members</div><div class="pricing-item">Unlimited form templates</div><div class="pricing-item">Recurring task scheduling</div><div class="pricing-item">Analytics &amp; reports</div><div class="pricing-item">PDF / CSV export</div><div class="pricing-item">Overdue escalation alerts</div></div><button class="btn btn-blue" style="width:100%;justify-content:center;" onclick="showPage('login')">Start 14-day trial</button></div>
+        <div class="pricing-card"><div class="pricing-name">Enterprise</div><div class="pricing-price" style="font-size:28px;letter-spacing:-0.5px;padding-top:5px;">Custom</div><div class="pricing-period">Contact for pricing</div><div class="pricing-desc">For large orgs with compliance &amp; SSO needs.</div><div class="pricing-divider"></div><div class="pricing-items"><div class="pricing-item">Everything in Professional</div><div class="pricing-item">SSO / SAML auth</div><div class="pricing-item">Custom branding</div><div class="pricing-item">Dedicated account manager</div></div><button class="btn btn-ghost" style="width:100%;justify-content:center;">Talk to sales</button></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="cta-strip">
+    <div class="cta-inner">
+      <h2>Ready to take<br><em>control?</em></h2>
+      <p>Join operational teams who've modernized how they assign, track, and report on work.</p>
+      <div style="display:flex;gap:10px;justify-content:center;">
+        <button class="btn btn-blue" style="font-size:14px;padding:12px 28px;" onclick="showPage('login')">Start free trial →</button>
+        <button class="btn btn-ghost" style="font-size:13px;padding:11px 22px;color:rgba(244,240,232,0.6);border-color:rgba(244,240,232,0.15);" onclick="showApp('dashboard')">View demo</button>
+      </div>
+      <div class="cta-note">No credit card · 14-day trial · Setup in minutes</div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="footer-inner">
+      <div><div class="footer-brand"><span class="logo-text">OpTraxx</span></div><div class="footer-tagline">Operational task management built for supervisors who need real accountability.</div></div>
+      <div><div class="footer-col-title">Product</div><div class="footer-links"><a class="footer-link" onclick="navScrollTo('features')">Features</a><a class="footer-link" onclick="navScrollTo('pricing')">Pricing</a><a class="footer-link">Changelog</a><a class="footer-link">Status</a></div></div>
+      <div><div class="footer-col-title">App</div><div class="footer-links"><a class="footer-link" onclick="showPage('login')">Sign in</a><a class="footer-link" onclick="showApp('dashboard')">Dashboard</a><a class="footer-link" onclick="showApp('analytics')">Analytics</a></div></div>
+      <div><div class="footer-col-title">Legal</div><div class="footer-links"><a class="footer-link">Privacy</a><a class="footer-link">Terms</a><a class="footer-link">Security</a></div></div>
+    </div>
+    <div class="footer-bottom">
+      <div class="footer-copy">© 2026 OpTraxx Inc.</div>
+      <div class="footer-bottom-links"><a class="footer-bottom-link">Twitter / X</a><a class="footer-bottom-link">LinkedIn</a><a class="footer-bottom-link">GitHub</a></div>
+    </div>
+  </footer>
+</div>
+
+
+<!-- ════════════════════════════════════════════════════════════════════
+     LOGIN
+════════════════════════════════════════════════════════════════════ -->
+<div id="login" class="page" style="align-items:center;justify-content:center;padding:80px 20px;padding-top:90px;">
+  <div class="login-wrap fade-in">
+    <div class="login-panel">
+      <div class="login-brand"><span class="logo-text">OpTraxx</span></div>
+      <h2>Welcome back</h2>
+      <p class="sub">Sign in to your supervisor account</p>
+      <div class="field"><label>Work Email</label><input type="email" placeholder="you@company.com"></div>
+      <div class="field"><label>Password</label><input type="password" placeholder="••••••••••"></div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="showApp('dashboard')">Sign In →</button>
+      <div class="divider-or">or</div>
+      <button class="btn btn-ghost" style="width:100%;justify-content:center;">🏢 Continue with SSO</button>
+      <div style="margin-top:14px;font-size:12.5px;color:var(--ink-muted);">Don't have an account? <a style="color:var(--blue);cursor:pointer;font-weight:500;">Request access</a> · <a style="color:var(--blue);cursor:pointer;font-weight:500;">Forgot password?</a></div>
+      <div style="margin-top:12px;"><button class="btn btn-ghost btn-sm" onclick="showPage('landing')" style="font-size:12px;color:var(--ink-faint);">← Back to homepage</button></div>
+    </div>
+    <div class="login-sidebar">
+      <h3>Operational clarity starts here.</h3>
+      <p>Join teams who replaced scattered spreadsheets and chat threads with a single source of truth.</p>
+      <div class="login-feats">
+        <div class="login-feat">Custom form builder</div>
+        <div class="login-feat">Team hierarchy management</div>
+        <div class="login-feat">Real-time task tracking</div>
+        <div class="login-feat">Analytics &amp; accountability reports</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════════════════════════════════════
+     APP SHELL  — shared sidebar across all 6 screens
+════════════════════════════════════════════════════════════════════ -->
+<div id="app" class="page-fill">
+  <div class="app-layout">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-section">Overview</div>
+      <div class="sidebar-item" id="sb-dashboard" onclick="showApp('dashboard')"><span class="s-icon">◼</span> Dashboard</div>
+      <div class="sidebar-item" id="sb-tasks" onclick="showApp('tasks')"><span class="s-icon">☑</span> Task List <span class="sidebar-badge">12</span></div>
+      <div class="sidebar-section">Supervisor</div>
+      <div class="sidebar-item" id="sb-assign" onclick="showApp('assign')"><span class="s-icon">📤</span> Assign Tasks</div>
+      <div class="sidebar-item" id="sb-formbuilder" onclick="showApp('formbuilder')"><span class="s-icon">⊞</span> Form Builder</div>
+      <div class="sidebar-item" id="sb-analytics" onclick="showApp('analytics')"><span class="s-icon">▤</span> Analytics</div>
+      <div class="sidebar-section">Team</div>
+      <div class="sidebar-item" onclick="showApp('dashboard')"><span class="s-icon">◎</span> My Team</div>
+      <div class="sidebar-item"><span class="s-icon">↑</span> Escalations <span class="sidebar-badge red">3</span></div>
+      <div class="sidebar-section">Account</div>
+      <div class="sidebar-item" onclick="showPage('profile')"><span class="s-icon">↓</span> Reports &amp; Export</div>
+      <div style="margin-top:auto;padding:12px 8px;">
+        <div style="display:flex;align-items:center;gap:9px;cursor:pointer;padding:8px;border-radius:8px;transition:background 0.15s;" onmouseover="this.style.background='var(--sand-dark)'" onmouseout="this.style.background=''" onclick="showPage('profile')">
+          <div class="avatar av-ink" style="width:30px;height:30px;font-size:10.5px;">JD</div>
+          <div><div style="font-size:12.5px;font-weight:500;">Jordan Davis</div><div style="font-size:10.5px;color:var(--ink-muted);">Supervisor</div></div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- MAIN PANE (screens swap inside here) -->
+    <main class="main-content" id="app-main">
+      <!-- content injected by showApp() -->
+    </main>
+
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════════════════════════════════════
+     PROFILE (standalone page-fill)
+════════════════════════════════════════════════════════════════════ -->
+<div id="profile" class="page-fill">
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div class="sidebar-section">Overview</div>
+      <div class="sidebar-item" onclick="showApp('dashboard')"><span class="s-icon">◼</span> Dashboard</div>
+      <div class="sidebar-item" onclick="showApp('tasks')"><span class="s-icon">☑</span> Task List <span class="sidebar-badge">12</span></div>
+      <div class="sidebar-section">Supervisor</div>
+      <div class="sidebar-item" onclick="showApp('assign')"><span class="s-icon">📤</span> Assign Tasks</div>
+      <div class="sidebar-item" onclick="showApp('formbuilder')"><span class="s-icon">⊞</span> Form Builder</div>
+      <div class="sidebar-item" onclick="showApp('analytics')"><span class="s-icon">▤</span> Analytics</div>
+      <div class="sidebar-section">Team</div>
+      <div class="sidebar-item"><span class="s-icon">◎</span> My Team</div>
+      <div class="sidebar-item"><span class="s-icon">↑</span> Escalations <span class="sidebar-badge red">3</span></div>
+      <div class="sidebar-section">Account</div>
+      <div class="sidebar-item active"><span class="s-icon">↓</span> Reports &amp; Export</div>
+      <div style="margin-top:auto;padding:12px 8px;">
+        <div style="display:flex;align-items:center;gap:9px;cursor:pointer;padding:8px;border-radius:8px;" onclick="showPage('profile')">
+          <div class="avatar av-ink" style="width:30px;height:30px;font-size:10.5px;">JD</div>
+          <div><div style="font-size:12.5px;font-weight:500;">Jordan Davis</div><div style="font-size:10.5px;color:var(--ink-muted);">Supervisor</div></div>
+        </div>
+      </div>
+    </aside>
+    <main class="main-content">
+      <div class="breadcrumb"><span class="b-link" onclick="showPage('landing')">OpTraxx</span><span class="sep">›</span><span>Profile</span></div>
+      <div class="page-header"><div class="page-header-left"><h1>My Profile</h1><p>Manage your account settings and preferences</p></div></div>
+      <div class="profile-header-card">
+        <div class="profile-avatar">JD</div>
+        <div style="flex:1"><div class="profile-name">Jordan Davis</div><div class="profile-role">Supervisor · Engineering Operations</div><div class="profile-meta"><div class="profile-meta-item"><strong>47</strong> tasks completed</div><div class="profile-meta-item"><strong>4</strong> team members</div><div class="profile-meta-item"><strong>Since</strong> Jan 2024</div></div></div>
+        <button class="btn btn-ghost btn-sm">Edit Profile</button>
+      </div>
+      <div class="profile-grid">
+        <div class="card"><div class="card-inner"><div class="section-title" style="margin-bottom:16px;">Account Information</div><div class="field"><label>Full Name</label><input type="text" value="Jordan Davis"></div><div class="field"><label>Work Email</label><input type="email" value="j.davis@company.com"></div><div class="field"><label>Department</label><select><option>Engineering Operations</option><option>Frontend Engineer Management</option></select></div><div class="field" style="margin-bottom:0;"><label>Role</label><input type="text" value="Supervisor" disabled style="background:var(--sand-dark);color:var(--ink-muted);"></div></div><div style="padding:14px 22px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;"><button class="btn btn-ghost btn-sm">Discard</button><button class="btn btn-blue btn-sm">Save Changes</button></div></div>
+        <div class="card"><div class="card-inner"><div class="section-title" style="margin-bottom:16px;">Notification Preferences</div><div class="toggle-row"><div><div class="toggle-label">Task assigned to team</div><div class="toggle-sub">Get notified when work is sent to your team</div></div><button class="toggle on" onclick="this.classList.toggle('on')"></button></div><div class="toggle-row"><div><div class="toggle-label">Overdue alerts</div><div class="toggle-sub">Escalation warnings for past-due tasks</div></div><button class="toggle on" onclick="this.classList.toggle('on')"></button></div><div class="toggle-row"><div><div class="toggle-label">Task completions</div><div class="toggle-sub">Notify when a member marks a task done</div></div><button class="toggle on" onclick="this.classList.toggle('on')"></button></div><div class="toggle-row"><div><div class="toggle-label">Weekly summary report</div><div class="toggle-sub">Monday digest of team performance</div></div><button class="toggle" onclick="this.classList.toggle('on')"></button></div></div></div>
+        <div class="card"><div class="card-inner"><div class="section-title" style="margin-bottom:16px;">Performance This Month</div><div style="display:flex;flex-direction:column;gap:14px;"><div><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px;"><span style="color:var(--ink-soft);">Tasks Completed</span><span style="font-family:'DM Mono',monospace;color:var(--ink);">47 / 60</span></div><div class="progress-bar"><div class="progress-fill" style="width:78%"></div></div></div><div><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px;"><span style="color:var(--ink-soft);">On-time Delivery</span><span style="font-family:'DM Mono',monospace;color:var(--blue);">91%</span></div><div class="progress-bar"><div class="progress-fill" style="width:91%;background:var(--blue)"></div></div></div><div><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px;"><span style="color:var(--ink-soft);">Forms Submitted</span><span style="font-family:'DM Mono',monospace;color:var(--emerald);">28 / 28</span></div><div class="progress-bar"><div class="progress-fill" style="width:100%;background:var(--emerald)"></div></div></div></div></div></div>
+        <div class="card"><div class="card-inner"><div class="section-title" style="margin-bottom:16px;">Security</div><div class="field"><label>Current Password</label><input type="password" placeholder="••••••••"></div><div class="field"><label>New Password</label><input type="password" placeholder="••••••••"></div><div class="field" style="margin-bottom:0;"><label>Confirm Password</label><input type="password" placeholder="••••••••"></div></div><div style="padding:14px 22px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;"><button class="btn btn-primary btn-sm">Update Password</button></div></div>
+      </div>
+      <div style="margin-top:16px;" class="card"><div class="card-inner" style="padding:18px 22px;display:flex;align-items:center;justify-content:space-between;"><div><div style="font-size:13px;font-weight:600;color:var(--red);">Danger Zone</div><div style="font-size:12px;color:var(--ink-muted);margin-top:2px;">Permanently delete your account and all associated data.</div></div><button class="btn btn-danger btn-sm">Delete Account</button></div></div>
+    </main>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════════════════════════════════════
+     SCREEN TEMPLATES (hidden, cloned into #app-main)
+════════════════════════════════════════════════════════════════════ -->
+
+<!-- ① DASHBOARD -->
+<template id="tpl-dashboard">
+  <div class="breadcrumb"><span class="b-link" onclick="showPage('landing')">OpTraxx</span><span class="sep">›</span><span>Dashboard</span></div>
+  <div class="page-header">
+    <div class="page-header-left"><h1>Good morning, Jordan 👋</h1><p>Tuesday, March 10 · Engineering Operations · 12 open tasks</p></div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-ghost btn-sm" onclick="showApp('analytics')">📊 Analytics</button>
+      <button class="btn btn-blue btn-sm" onclick="showApp('assign')">+ Assign Task</button>
+    </div>
+  </div>
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-card-label">Open Tasks</div><div class="stat-card-value">12</div><div class="stat-card-delta">↑ 3 added today</div></div>
+    <div class="stat-card"><div class="stat-card-label">Completed</div><div class="stat-card-value">47</div><div class="stat-card-delta" style="color:var(--emerald);">✓ This week</div></div>
+    <div class="stat-card"><div class="stat-card-label">Overdue</div><div class="stat-card-value" style="color:var(--red);">3</div><div class="stat-card-delta" style="color:var(--red);">↑ needs attention</div></div>
+    <div class="stat-card"><div class="stat-card-label">Completion Rate</div><div class="stat-card-value">79%</div><div class="stat-card-delta">↑ +4% vs last week</div></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 320px;gap:16px;">
+    <div>
+      <div class="section-title">Active Tasks <button class="section-link" onclick="showApp('tasks')">View all →</button></div>
+      <div class="task-list">
+        <div class="task-item" onclick="showApp('completeform')"><div class="task-check"></div><div class="task-meta"><div class="task-title">Server Patch Deployment — Prod</div><div class="task-sub">A. Patel · Engineering</div></div><span class="tag tag-amber">In Progress</span><div class="task-due">Mar 5</div></div>
+        <div class="task-item" onclick="showApp('completeform')"><div class="task-check"></div><div class="task-meta"><div class="task-title">Fix Critical Bug — Auth Service</div><div class="task-sub">J. Kim · Frontend Engineer</div></div><span class="tag tag-red">Overdue</span><div class="task-due overdue">Mar 2</div></div>
+        <div class="task-item"><div class="task-check done"></div><div class="task-meta"><div class="task-title done">Code Review — Payment Module</div><div class="task-sub">Completed by L. Chen · Safety</div></div><span class="tag tag-green">Done</span><div class="task-due">Mar 4</div></div>
+        <div class="task-item" onclick="showApp('completeform')"><div class="task-check"></div><div class="task-meta"><div class="task-title">Deploy Monitoring Stack — Prod</div><div class="task-sub">M. Rivera · DevOps</div></div><span class="tag tag-muted">Pending</span><div class="task-due">Mar 8</div></div>
+        <div class="task-item"><div class="task-check done"></div><div class="task-meta"><div class="task-title done">Onboarding checklist — New hire T. Brooks</div><div class="task-sub">Completed by Onboarding Team</div></div><span class="tag tag-green">Done</span><div class="task-due">Mar 4</div></div>
+      </div>
+      <div class="card" style="margin-top:14px;"><div class="card-inner" style="padding:16px 18px;"><div class="section-title" style="margin-bottom:6px;">Weekly Progress <span style="font-size:12px;color:var(--blue);font-weight:600;">47/60 tasks</span></div><div class="progress-bar"><div class="progress-fill" style="width:78%"></div></div><div style="font-size:11px;color:var(--ink-muted);margin-top:6px;font-family:'DM Mono',monospace;">78% of weekly target · 13 tasks remaining</div></div></div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:14px;">
+      <div class="card"><div class="card-inner"><div class="section-title">My Team</div><div class="team-list"><div class="team-member"><div class="avatar av-green">AP</div><div style="flex:1"><div class="member-name">A. Patel</div><div class="member-role">Backend Engineer</div></div><span class="tag tag-amber" style="font-size:10px;">3 open</span></div><div class="team-member"><div class="avatar av-amber">JK</div><div style="flex:1"><div class="member-name">J. Kim</div><div class="member-role">Frontend Engineer</div></div><span class="tag tag-red" style="font-size:10px;">1 overdue</span></div><div class="team-member"><div class="avatar av-blue">LC</div><div style="flex:1"><div class="member-name">L. Chen</div><div class="member-role">QA Engineer</div></div><span class="tag tag-green" style="font-size:10px;">All clear</span></div><div class="team-member"><div class="avatar av-cyan">MR</div><div style="flex:1"><div class="member-name">M. Rivera</div><div class="member-role">DevOps Engineer</div></div><span class="tag tag-muted" style="font-size:10px;">1 pending</span></div></div></div></div>
+      <div class="card"><div class="card-inner"><div class="section-title">Recent Activity</div><div class="activity-list"><div class="activity-item"><div class="activity-dot" style="background:var(--emerald)"></div><div><div class="activity-text"><strong>L. Chen</strong> completed Code Review — Auth Module</div><div class="activity-time">10 min ago</div></div></div><div class="activity-item"><div class="activity-dot" style="background:var(--red)"></div><div><div class="activity-text"><strong>Parking lot lights</strong> flagged overdue</div><div class="activity-time">1 hr ago</div></div></div><div class="activity-item"><div class="activity-dot" style="background:var(--amber)"></div><div><div class="activity-text"><strong>A. Patel</strong> started HVAC Inspection B3</div><div class="activity-time">2 hr ago</div></div></div><div class="activity-item"><div class="activity-dot" style="background:var(--blue)"></div><div><div class="activity-text">New task <strong>Camera Install</strong> assigned to M. Rivera</div><div class="activity-time">Yesterday</div></div></div></div></div></div>
+    </div>
+  </div>
+</template>
+
+
+<!-- ② TASK LIST -->
+<template id="tpl-tasks">
+  <div class="breadcrumb"><span class="b-link" onclick="showPage('landing')">OpTraxx</span><span class="sep">›</span><span>Task List</span></div>
+  <div class="page-header">
+    <div class="page-header-left"><h1>Task List</h1><p>All assigned tasks across your engineering team</p></div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <div class="search-input-wrap"><span class="search-icon">🔍</span><input placeholder="Search tasks..." style="width:220px;"></div>
+      <button class="btn btn-blue btn-sm" onclick="showApp('assign')">+ Assign New Task</button>
+    </div>
+  </div>
+  <div class="filter-bar">
+    <button class="filter-pill active" onclick="setFilter(this)">All Tasks (12)</button>
+    <button class="filter-pill" onclick="setFilter(this)">In Progress (4)</button>
+    <button class="filter-pill" onclick="setFilter(this)">Overdue (3)</button>
+    <button class="filter-pill" onclick="setFilter(this)">Pending (3)</button>
+    <button class="filter-pill" onclick="setFilter(this)">Completed (2)</button>
+    <div style="margin-left:auto;display:flex;gap:6px;">
+      <select style="width:auto;padding:6px 10px;font-size:12.5px;border-radius:7px;"><option>Sort: Due Date</option><option>Sort: Priority</option><option>Sort: Assignee</option></select>
+    </div>
+  </div>
+  <div class="card" style="overflow:hidden;">
+    <div class="task-row-head">
+      <div class="col-label">Task Name</div>
+      <div class="col-label">Assigned To</div>
+      <div class="col-label">Form</div>
+      <div class="col-label">Due Date</div>
+      <div class="col-label">Priority</div>
+      <div class="col-label">Status</div>
+    </div>
+    <div class="task-row" onclick="showApp('completeform')"><div><div class="task-row-name">Server Patch Deployment — Prod</div><div class="task-row-sub">Server Checklist</div></div><div style="display:flex;align-items:center;gap:7px;"><div class="avatar av-green" style="width:24px;height:24px;font-size:9px;">AP</div><span style="font-size:12.5px;">A. Patel</span></div><span class="tag tag-cyan" style="font-size:10px;">Server Checklist</span><div style="font-size:12px;font-family:'DM Mono',monospace;color:var(--amber);">Mar 5</div><span class="tag tag-amber" style="font-size:10px;">Medium</span><span class="tag tag-amber" style="font-size:10px;">In Progress</span></div>
+    <div class="task-row" onclick="showApp('completeform')" style="border-left:3px solid var(--red);"><div><div class="task-row-name">Fix Critical Bug — Auth Service</div><div class="task-row-sub">Bug Report Form</div></div><div style="display:flex;align-items:center;gap:7px;"><div class="avatar av-amber" style="width:24px;height:24px;font-size:9px;">JK</div><span style="font-size:12.5px;">J. Kim</span></div><span class="tag tag-red" style="font-size:10px;">Safety Check</span><div style="font-size:12px;font-family:'DM Mono',monospace;color:var(--red);font-weight:700;">Mar 2</div><span class="tag tag-red" style="font-size:10px;">High</span><span class="tag tag-red" style="font-size:10px;">Overdue</span></div>
+    <div class="task-row" onclick="showApp('completeform')" style="border-left:3px solid var(--red);"><div><div class="task-row-name">Database Migration — Users Table</div><div class="task-row-sub">Engineering Log</div></div><div style="display:flex;align-items:center;gap:7px;"><div class="avatar av-green" style="width:24px;height:24px;font-size:9px;">AP</div><span style="font-size:12.5px;">A. Patel</span></div><span class="tag tag-violet" style="font-size:10px;">Engineering Log</span><div style="font-size:12px;font-family:'DM Mono',monospace;color:var(--red);font-weight:700;">Mar 1</div><span class="tag tag-red" style="font-size:10px;">High</span><span class="tag tag-red" style="font-size:10px;">Overdue</span></div>
+    <div class="task-row" onclick="showApp('completeform')"><div><div class="task-row-name">Deploy Monitoring Stack — Prod</div><div class="task-row-sub">DevOps Request</div></div><div style="display:flex;align-items:center;gap:7px;"><div class="avatar av-cyan" style="width:24px;height:24px;font-size:9px;">MR</div><span style="font-size:12.5px;">M. Rivera</span></div><span class="tag tag-blue" style="font-size:10px;">IT Request</span><div style="font-size:12px;font-family:'DM Mono',monospace;">Mar 8</div><span class="tag tag-amber" style="font-size:10px;">Medium</span><span class="tag tag-muted" style="font-size:10px;">Pending</span></div>
+    <div class="task-row" onclick="showApp('completeform')"><div><div class="task-row-name">Security Vulnerability Audit</div><div class="task-row-sub">Security Audit</div></div><div style="display:flex;align-items:center;gap:7px;"><div class="avatar av-blue" style="width:24px;height:24px;font-size:9px;">LC</div><span style="font-size:12.5px;">L. Chen</span></div><span class="tag tag-red" style="font-size:10px;">Security Audit</span><div style="font-size:12px;font-family:'DM Mono',monospace;">Mar 10</div><span class="tag tag-red" style="font-size:10px;">High</span><span class="tag tag-amber" style="font-size:10px;">In Progress</span></div>
+    <div class="task-row"><div><div class="task-row-name" style="text-decoration:line-through;color:var(--ink-faint);">Code Review — Payment Module</div><div class="task-row-sub">Bug Report Form</div></div><div style="display:flex;align-items:center;gap:7px;"><div class="avatar av-blue" style="width:24px;height:24px;font-size:9px;">LC</div><span style="font-size:12.5px;color:var(--ink-faint);">L. Chen</span></div><span class="tag tag-green" style="font-size:10px;">Safety Check</span><div style="font-size:12px;font-family:'DM Mono',monospace;color:var(--ink-faint);">Mar 4</div><span class="tag tag-green" style="font-size:10px;">Medium</span><span class="tag tag-green" style="font-size:10px;">Completed</span></div>
+    <div class="task-row"><div><div class="task-row-name" style="text-decoration:line-through;color:var(--ink-faint);">Onboarding checklist — New hire T. Brooks</div><div class="task-row-sub">OB Onboarding</div></div><div style="display:flex;align-items:center;gap:7px;"><div class="avatar" style="width:24px;height:24px;font-size:9px;background:var(--sand-deeper);">OB</div><span style="font-size:12.5px;color:var(--ink-faint);">Onboarding Team</span></div><span class="tag tag-green" style="font-size:10px;">OB Form</span><div style="font-size:12px;font-family:'DM Mono',monospace;color:var(--ink-faint);">Mar 4</div><span class="tag tag-muted" style="font-size:10px;">Low</span><span class="tag tag-green" style="font-size:10px;">Completed</span></div>
+  </div>
+  <div style="margin-top:12px;display:flex;justify-content:space-between;align-items:center;">
+    <div style="font-size:12px;color:var(--ink-muted);font-family:'DM Mono',monospace;">Showing 7 of 12 tasks</div>
+    <div style="display:flex;gap:4px;">
+      <button class="btn btn-ghost btn-sm">← Prev</button>
+      <button class="btn btn-ghost btn-sm" style="background:var(--ink);color:var(--sand);">1</button>
+      <button class="btn btn-ghost btn-sm">2</button>
+      <button class="btn btn-ghost btn-sm">Next →</button>
+    </div>
+  </div>
+</template>
+
+
+<!-- ③ TASK COMPLETION FORM -->
+<template id="tpl-completeform">
+  <div class="breadcrumb"><span class="b-link" onclick="showPage('landing')">OpTraxx</span><span class="sep">›</span><span class="b-link" onclick="showApp('tasks')">Task List</span><span class="sep">›</span><span>Complete Form</span></div>
+  <div class="page-header">
+    <div class="page-header-left"><h1>Server Patch Deployment — Prod</h1><p>Assigned by Jordan Davis · Due March 5 · Engineering Team</p></div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-ghost btn-sm" onclick="showApp('tasks')">← Back to Tasks</button>
+    </div>
+  </div>
+
+  <div class="form-progress-header">
+    <div class="form-steps-wrap">
+      <div class="form-step"><div class="form-step-circle fsc-done"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></div><div class="form-step-label" style="color:var(--emerald);">Info</div></div>
+      <div class="form-step-connector" style="background:var(--emerald);"></div>
+      <div class="form-step"><div class="form-step-circle fsc-active">2</div><div class="form-step-label" style="color:var(--blue);">Checklist</div></div>
+      <div class="form-step-connector" style="background:var(--sand-dark);"></div>
+      <div class="form-step"><div class="form-step-circle fsc-todo">3</div><div class="form-step-label" style="color:var(--ink-faint);">Notes</div></div>
+      <div class="form-step-connector" style="background:var(--sand-dark);"></div>
+      <div class="form-step"><div class="form-step-circle fsc-todo">4</div><div class="form-step-label" style="color:var(--ink-faint);">Sign &amp; Submit</div></div>
+    </div>
+    <span class="tag tag-amber">In Progress</span>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 280px;gap:16px;">
+    <div>
+      <div class="card">
+        <div class="card-header"><div class="card-header-title">Step 2 — Server Checklistlist</div><span style="font-size:12px;color:var(--ink-faint);font-family:'DM Mono',monospace;">4 of 7 items completed</span></div>
+        <div class="card-inner">
+          <div id="checklist-items">
+            <div class="checklist-item" onclick="toggleCheck(this)"><div class="checklist-box checked"></div><div class="checklist-text checked">All unit tests passing (green CI)</div></div>
+            <div class="checklist-item" onclick="toggleCheck(this)"><div class="checklist-box checked"></div><div class="checklist-text checked">Dependencies updated and reviewed</div></div>
+            <div class="checklist-item" onclick="toggleCheck(this)"><div class="checklist-box checked"></div><div class="checklist-text checked">Environment variables configured correctly</div></div>
+            <div class="checklist-item" onclick="toggleCheck(this)"><div class="checklist-box checked"></div><div class="checklist-text checked">Database migrations reviewed and tested</div></div>
+            <div class="checklist-item" onclick="toggleCheck(this)"><div class="checklist-box"></div><div class="checklist-text">Staging smoke tests completed</div></div>
+            <div class="checklist-item" onclick="toggleCheck(this)"><div class="checklist-box"></div><div class="checklist-text">Rollback plan documented and verified</div></div>
+            <div class="checklist-item" onclick="toggleCheck(this)"><div class="checklist-box"></div><div class="checklist-text">Post-deploy monitoring alerts set up</div></div>
+          </div>
+          <div class="progress-bar" style="height:6px;margin-top:16px;"><div class="progress-fill" id="checklist-progress" style="width:57%;background:var(--blue);"></div></div>
+          <div style="font-size:11.5px;color:var(--ink-muted);margin-top:5px;font-family:'DM Mono',monospace;" id="checklist-count">4 of 7 items completed</div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:14px;">
+        <div class="card-header"><div class="card-header-title">Step 3 — Notes &amp; Observations</div></div>
+        <div class="card-inner">
+          <div class="field"><label>Findings / Notes</label><textarea placeholder="Describe any issues, unusual readings, or observations..." rows="4"></textarea></div>
+          <div class="field" style="margin-bottom:0;"><label>Photo Attachments (optional)</label><div style="height:60px;background:var(--sand);border:2px dashed var(--border);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12.5px;color:var(--ink-faint);cursor:pointer;transition:all 0.15s;" onmouseover="this.style.borderColor='var(--blue)';this.style.color='var(--blue)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--ink-faint)'">📎 Drag files or click to upload</div></div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:14px;">
+        <div class="card-header"><div class="card-header-title">Step 4 — Signature &amp; Submit</div></div>
+        <div class="card-inner">
+          <div class="field"><label>Employee Signature <span style="color:var(--red);">*</span></label>
+            <div class="sig-area" onclick="this.innerHTML='✍️  Signed — A. Patel  ·  Mar 10, 2026';this.style.background='var(--emerald-pale)';this.style.borderColor='var(--emerald)';this.style.color='var(--emerald)';">✍️ Click here to sign</div>
+          </div>
+          <div style="background:var(--blue-pale);border:1.5px solid rgba(37,99,235,0.2);border-radius:9px;padding:14px 16px;margin-bottom:16px;font-size:12.5px;color:var(--blue);">
+            <strong>Before submitting:</strong> Review all checklist items and notes above. Once submitted, your supervisor will be notified for review.
+          </div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-ghost" style="flex:1;justify-content:center;" onclick="showApp('tasks')">← Save Draft</button>
+            <button class="btn btn-emerald" style="flex:2;justify-content:center;" onclick="showSubmitConfirm()">Submit Form ✓</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <div class="card"><div class="card-inner"><div class="section-title" style="margin-bottom:12px;">Task Details</div><div style="display:flex;flex-direction:column;gap:9px;font-size:12.5px;"><div style="display:flex;justify-content:space-between;"><span style="color:var(--ink-muted);">Form</span><span style="font-weight:500;">Server Checklist</span></div><div style="display:flex;justify-content:space-between;"><span style="color:var(--ink-muted);">Assigned By</span><span style="font-weight:500;">Jordan Davis</span></div><div style="display:flex;justify-content:space-between;"><span style="color:var(--ink-muted);">Due Date</span><span style="font-weight:600;color:var(--amber);">Mar 5, 2026</span></div><div style="display:flex;justify-content:space-between;"><span style="color:var(--ink-muted);">Priority</span><span class="tag tag-amber" style="font-size:10px;">Medium</span></div><div style="display:flex;justify-content:space-between;"><span style="color:var(--ink-muted);">Recurrence</span><span style="font-weight:500;">Monthly</span></div></div></div></div>
+      <div class="card"><div class="card-inner"><div class="section-title" style="margin-bottom:10px;">My Progress</div><div style="margin-bottom:8px;"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;"><span style="color:var(--ink-muted);">Checklist</span><span style="font-family:'DM Mono',monospace;color:var(--blue);" id="prog-label2">57%</span></div><div class="progress-bar" style="height:6px;"><div class="progress-fill" id="prog-bar2" style="width:57%;background:var(--blue);"></div></div></div><div style="font-size:11.5px;color:var(--ink-muted);">3 steps remaining before submission</div></div></div>
+      <div class="card"><div class="card-inner"><div class="section-title" style="margin-bottom:8px;">Supervisor Notes</div><div style="font-size:12.5px;color:var(--ink-muted);line-height:1.6;font-style:italic;">"Please ensure all rollback steps are documented before deploying to production."</div><div style="font-size:11px;color:var(--ink-faint);margin-top:6px;font-family:'DM Mono',monospace;">— Jordan Davis, Mar 3</div></div></div>
+    </div>
+  </div>
+</template>
+
+
+<!-- ④ FORM BUILDER -->
+<template id="tpl-formbuilder">
+  <div class="breadcrumb"><span class="b-link" onclick="showPage('landing')">OpTraxx</span><span class="sep">›</span><span>Form Builder</span></div>
+  <div class="page-header">
+    <div class="page-header-left"><h1>Form Builder</h1><p>Create and manage reusable form templates for your engineering workflows</p></div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-ghost btn-sm">Preview</button>
+      <button class="btn btn-ghost btn-sm">Save Draft</button>
+      <button class="btn btn-blue btn-sm" onclick="showApp('assign')">Publish &amp; Assign →</button>
+    </div>
+  </div>
+  <div style="height:calc(100vh - 178px);display:grid;grid-template-columns:210px 1fr 230px;border:1px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:var(--shadow);">
+
+    <!-- LEFT: Field types + templates -->
+    <div class="fb-panel">
+      <div class="fb-panel-title">Field Types</div>
+      <div class="field-type-grid">
+        <div class="field-type-btn" onclick="addField('Text Input')">🔤 Text</div>
+        <div class="field-type-btn" onclick="addField('Number')">🔢 Number</div>
+        <div class="field-type-btn" onclick="addField('Dropdown')">▼ Select</div>
+        <div class="field-type-btn" onclick="addField('Checkbox')">☑ Check</div>
+        <div class="field-type-btn" onclick="addField('Date')">📅 Date</div>
+        <div class="field-type-btn" onclick="addField('File Upload')">📎 File</div>
+        <div class="field-type-btn" onclick="addField('Signature')">✍️ Sign</div>
+        <div class="field-type-btn" onclick="addField('Photo')">📷 Photo</div>
+        <div class="field-type-btn" onclick="addField('Textarea')">📝 Notes</div>
+        <div class="field-type-btn" onclick="addField('Rating')">⭐ Rating</div>
+      </div>
+      <div class="fb-panel-title" style="margin-top:4px;">Templates</div>
+      <div class="template-pill" onclick="loadTemplate()">Bug Report Form <span style="font-size:10px;color:var(--blue);">Load →</span></div>
+      <div class="template-pill" onclick="loadTemplate()">Bug Incident Report <span style="font-size:10px;color:var(--blue);">Load →</span></div>
+      <div class="template-pill" onclick="loadTemplate()">Server Checklist <span style="font-size:10px;color:var(--blue);">Load →</span></div>
+      <div class="template-pill" onclick="loadTemplate()">Daily Shift Log <span style="font-size:10px;color:var(--blue);">Load →</span></div>
+    </div>
+
+    <!-- CENTER: Canvas -->
+    <div class="fb-canvas">
+      <div class="canvas-form">
+        <input class="canvas-form-title" id="fb-form-title" value="Server Deployment Checklist" style="font-family:'DM Serif Display',serif;font-size:20px;letter-spacing:-0.4px;border:none;border-bottom:2px solid var(--border);border-radius:0;background:transparent;padding:4px 0;margin-bottom:8px;width:100%;outline:none;" onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor='var(--border)'">
+        <input placeholder="Description / instructions for employees..." style="font-size:12.5px;color:var(--ink-muted);border:none;border-bottom:1px solid var(--border-soft);border-radius:0;background:transparent;padding:4px 0;margin-bottom:22px;width:100%;outline:none;" onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor='var(--border-soft)'">
+        <div id="fb-fields">
+          <div class="form-field-block selected" onclick="selectField(this)"><div class="field-block-label">Employee Name <span class="required">*</span></div><div class="field-block-type">TEXT INPUT</div><div class="field-block-preview"></div></div>
+          <div class="form-field-block" onclick="selectField(this)"><div class="field-block-label">Server / Instance ID <span class="required">*</span></div><div class="field-block-type">TEXT INPUT</div><div class="field-block-preview"></div></div>
+          <div class="form-field-block" onclick="selectField(this)"><div class="field-block-label">Deployment Date</div><div class="field-block-type">DATE / TIME</div><div class="field-block-preview" style="display:flex;align-items:center;padding:0 10px;font-size:12px;color:var(--ink-faint);">MM / DD / YYYY</div></div>
+          <div class="form-field-block" onclick="selectField(this)"><div class="field-block-label">Pre-Deployment Checks <span class="required">*</span></div><div class="field-block-type">CHECKBOX LIST</div><div style="display:flex;flex-direction:column;gap:5px;"><div style="display:flex;align-items:center;gap:7px;"><div style="width:13px;height:13px;border:1.5px solid var(--border);border-radius:3px;flex-shrink:0;"></div><div style="font-size:11.5px;color:var(--ink-muted);">Item 1...</div></div><div style="display:flex;align-items:center;gap:7px;"><div style="width:13px;height:13px;border:1.5px solid var(--border);border-radius:3px;flex-shrink:0;"></div><div style="font-size:11.5px;color:var(--ink-muted);">Item 2...</div></div></div></div>
+          <div class="form-field-block" onclick="selectField(this)"><div class="field-block-label">Notes / Observations</div><div class="field-block-type">TEXTAREA</div><div class="field-block-preview" style="height:44px;"></div></div>
+          <div class="form-field-block" onclick="selectField(this)"><div class="field-block-label">Signature <span class="required">*</span></div><div class="field-block-type">SIGNATURE</div><div class="field-block-preview" style="height:44px;display:flex;align-items:center;justify-content:center;font-size:11.5px;color:var(--ink-faint);">✍️ Signature field</div></div>
+        </div>
+        <div class="field-drop-zone" onclick="addField('Text Input')">+ Click or drag a field type here to add</div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Properties -->
+    <div class="fb-panel-right">
+      <div class="fb-panel-title">Field Properties</div>
+      <div class="prop-row"><div class="prop-label">Label</div><input value="Employee Name" style="font-size:12.5px;padding:7px 10px;"></div>
+      <div class="prop-row"><div class="prop-label">Placeholder</div><input placeholder="e.g. Your full name..." style="font-size:12.5px;padding:7px 10px;"></div>
+      <div class="prop-row" style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;"><div class="prop-label" style="margin-bottom:0;">Required</div><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
+      <div class="prop-row"><div class="prop-label">Help Text</div><input placeholder="Hint shown to employee..." style="font-size:12.5px;padding:7px 10px;"></div>
+      <div class="prop-row" style="padding:12px 16px;border-bottom:1px solid var(--border-soft);"><div class="prop-label" style="margin-bottom:8px;">Scheduling</div><div style="display:flex;flex-direction:column;gap:5px;"><div style="font-size:12px;color:var(--ink-muted);margin-bottom:3px;">Recurrence</div><div class="recur-btns"><button class="recur-btn" onclick="setRecur(this)">Once</button><button class="recur-btn active" onclick="setRecur(this)">Monthly</button><button class="recur-btn" onclick="setRecur(this)">Weekly</button></div></div></div>
+      <div style="padding:12px 16px;"><button class="btn btn-danger btn-sm" style="width:100%;justify-content:center;" onclick="deleteSelectedField()">🗑 Delete Field</button></div>
+    </div>
+  </div>
+</template>
+
+
+<!-- ⑤ ANALYTICS -->
+<template id="tpl-analytics">
+  <div class="breadcrumb"><span class="b-link" onclick="showPage('landing')">OpTraxx</span><span class="sep">›</span><span>Analytics</span></div>
+  <div class="page-header">
+    <div class="page-header-left"><h1>Analytics</h1><p>Performance insights across your operation</p></div>
+    <div style="display:flex;gap:6px;align-items:center;">
+      <div style="display:flex;gap:4px;background:#FDFAF5;border:1px solid var(--border);border-radius:8px;padding:3px;">
+        <button class="btn btn-ghost btn-xs" style="background:var(--ink);color:var(--sand);border:none;" onclick="setRange(this,'7d')">7 days</button>
+        <button class="btn btn-ghost btn-xs" onclick="setRange(this,'30d')">30 days</button>
+        <button class="btn btn-ghost btn-xs" onclick="setRange(this,'90d')">90 days</button>
+      </div>
+      <button class="btn btn-ghost btn-sm">↓ Export CSV</button>
+      <button class="btn btn-blue btn-sm">↓ Export PDF</button>
+    </div>
+  </div>
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-card-label">Avg Completion Rate</div><div class="stat-card-value">79%</div><div class="stat-card-delta">↑ +4% vs prior period</div></div>
+    <div class="stat-card"><div class="stat-card-label">Forms Submitted</div><div class="stat-card-value">142</div><div class="stat-card-delta">↑ +18 vs prior period</div></div>
+    <div class="stat-card"><div class="stat-card-label">Escalations</div><div class="stat-card-value" style="color:var(--red);">3</div><div class="stat-card-delta" style="color:var(--emerald);">↓ -2 vs prior period</div></div>
+    <div class="stat-card"><div class="stat-card-label">On-Time Rate</div><div class="stat-card-value">89%</div><div class="stat-card-delta" style="color:var(--emerald);">↑ +5% vs prior period</div></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+    <!-- Bar Chart -->
+    <div class="card"><div class="card-inner"><div class="section-title" style="margin-bottom:16px;">Task Completion — Last 7 Days</div>
+      <div class="chart-bar-wrap">
+        <div class="chart-bar-col"><div class="chart-bar" style="height:80px;background:var(--blue);width:100%;"></div><div class="chart-bar-label">Mon</div></div>
+        <div class="chart-bar-col"><div class="chart-bar" style="height:100px;background:var(--blue);width:100%;"></div><div class="chart-bar-label">Tue</div></div>
+        <div class="chart-bar-col"><div class="chart-bar" style="height:55px;background:var(--blue);width:100%;"></div><div class="chart-bar-label">Wed</div></div>
+        <div class="chart-bar-col"><div class="chart-bar" style="height:110px;background:var(--blue);width:100%;"></div><div class="chart-bar-label">Thu</div></div>
+        <div class="chart-bar-col"><div class="chart-bar" style="height:90px;background:var(--blue);width:100%;"></div><div class="chart-bar-label">Fri</div></div>
+        <div class="chart-bar-col"><div class="chart-bar" style="height:44px;background:var(--blue);opacity:0.5;width:100%;"></div><div class="chart-bar-label">Sat</div></div>
+        <div class="chart-bar-col"><div class="chart-bar" style="height:30px;background:var(--blue);opacity:0.5;width:100%;"></div><div class="chart-bar-label">Sun</div></div>
+      </div>
+      <div class="chart-legend"><div class="chart-legend-item"><div class="chart-legend-dot" style="background:var(--blue);"></div>Completed</div><div class="chart-legend-item"><div class="chart-legend-dot" style="background:var(--red);opacity:0.6;"></div>Overdue</div></div>
+    </div></div>
+    <!-- Donut -->
+    <div class="card"><div class="card-inner"><div class="section-title" style="margin-bottom:16px;">Tasks by Status</div>
+      <div style="display:flex;align-items:center;gap:24px;">
+        <div class="ring-wrap">
+          <svg width="130" height="130" viewBox="0 0 130 130" style="transform:rotate(-90deg)">
+            <circle cx="65" cy="65" r="48" fill="none" stroke="var(--sand-dark)" stroke-width="18"/>
+            <circle cx="65" cy="65" r="48" fill="none" stroke="var(--emerald)" stroke-width="18" stroke-dasharray="191 110" stroke-dashoffset="0"/>
+            <circle cx="65" cy="65" r="48" fill="none" stroke="var(--blue)" stroke-width="18" stroke-dasharray="66 235" stroke-dashoffset="-191"/>
+            <circle cx="65" cy="65" r="48" fill="none" stroke="var(--amber)" stroke-width="18" stroke-dasharray="44 257" stroke-dashoffset="-257"/>
+            <circle cx="65" cy="65" r="48" fill="none" stroke="var(--red)" stroke-width="18" stroke-dasharray="30 271" stroke-dashoffset="-301"/>
+          </svg>
+          <div class="ring-center"><div class="ring-center-val">79%</div><div class="ring-center-label">Done</div></div>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;gap:10px;">
+          <div style="display:flex;justify-content:space-between;font-size:12.5px;"><div style="display:flex;align-items:center;gap:7px;"><div style="width:10px;height:10px;border-radius:2px;background:var(--emerald);"></div>Completed</div><span style="font-family:'DM Mono',monospace;font-weight:700;color:var(--emerald);">64%</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:12.5px;"><div style="display:flex;align-items:center;gap:7px;"><div style="width:10px;height:10px;border-radius:2px;background:var(--blue);"></div>In Progress</div><span style="font-family:'DM Mono',monospace;font-weight:700;color:var(--blue);">21%</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:12.5px;"><div style="display:flex;align-items:center;gap:7px;"><div style="width:10px;height:10px;border-radius:2px;background:var(--amber);"></div>Pending</div><span style="font-family:'DM Mono',monospace;font-weight:700;color:var(--amber);">8%</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:12.5px;"><div style="display:flex;align-items:center;gap:7px;"><div style="width:10px;height:10px;border-radius:2px;background:var(--red);"></div>Overdue</div><span style="font-family:'DM Mono',monospace;font-weight:700;color:var(--red);">7%</span></div>
+        </div>
+      </div>
+    </div></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><div class="card-header-title">Individual Performance</div><button class="btn btn-ghost btn-xs">Export</button></div>
+    <div class="card-inner" style="padding-top:12px;">
+      <div class="perf-row"><div style="display:flex;align-items:center;gap:8px;width:120px;flex-shrink:0;"><div class="avatar av-green" style="width:26px;height:26px;font-size:9.5px;">AP</div><div class="perf-name" style="width:auto;">A. Patel</div></div><div class="perf-bar-wrap"><div class="perf-bar"><div class="perf-fill" style="width:92%;background:var(--emerald);"></div></div><div style="font-size:10.5px;color:var(--ink-faint);font-family:'DM Mono',monospace;margin-top:2px;">18 completed · 0 overdue</div></div><div class="perf-pct" style="color:var(--emerald);">92%</div><span class="tag tag-green" style="font-size:10px;margin-left:4px;">↑ Top performer</span></div>
+      <div class="perf-row"><div style="display:flex;align-items:center;gap:8px;width:120px;flex-shrink:0;"><div class="avatar av-blue" style="width:26px;height:26px;font-size:9.5px;">LC</div><div class="perf-name" style="width:auto;">L. Chen</div></div><div class="perf-bar-wrap"><div class="perf-bar"><div class="perf-fill" style="width:88%;background:var(--emerald);"></div></div><div style="font-size:10.5px;color:var(--ink-faint);font-family:'DM Mono',monospace;margin-top:2px;">16 completed · 0 overdue</div></div><div class="perf-pct" style="color:var(--emerald);">88%</div></div>
+      <div class="perf-row"><div style="display:flex;align-items:center;gap:8px;width:120px;flex-shrink:0;"><div class="avatar av-cyan" style="width:26px;height:26px;font-size:9.5px;">MR</div><div class="perf-name" style="width:auto;">M. Rivera</div></div><div class="perf-bar-wrap"><div class="perf-bar"><div class="perf-fill" style="width:72%;background:var(--blue);"></div></div><div style="font-size:10.5px;color:var(--ink-faint);font-family:'DM Mono',monospace;margin-top:2px;">11 completed · 1 overdue</div></div><div class="perf-pct" style="color:var(--blue);">72%</div></div>
+      <div class="perf-row"><div style="display:flex;align-items:center;gap:8px;width:120px;flex-shrink:0;"><div class="avatar av-amber" style="width:26px;height:26px;font-size:9.5px;">JK</div><div class="perf-name" style="width:auto;">J. Kim</div></div><div class="perf-bar-wrap"><div class="perf-bar"><div class="perf-fill" style="width:44%;background:var(--red);"></div></div><div style="font-size:10.5px;color:var(--ink-faint);font-family:'DM Mono',monospace;margin-top:2px;">7 completed · 2 overdue</div></div><div class="perf-pct" style="color:var(--red);">44%</div><span class="tag tag-red" style="font-size:10px;margin-left:4px;">⚠ Needs attention</span></div>
+    </div>
+  </div>
+</template>
+
+
+<!-- ⑥ TASK ASSIGNMENT -->
+<template id="tpl-assign">
+  <div class="breadcrumb"><span class="b-link" onclick="showPage('landing')">OpTraxx</span><span class="sep">›</span><span>Assign Tasks</span></div>
+  <div class="page-header">
+    <div class="page-header-left"><h1>Assign Tasks</h1><p>Attach a form to engineers or teams with scheduling and priority</p></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 300px;gap:16px;">
+    <div>
+      <div style="border:1px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:var(--shadow);">
+        <div class="assign-steps">
+          <div class="assign-step-tab active" onclick="setAssignStep(this,1)"><span class="assign-step-num">1</span>Select Form</div>
+          <div class="assign-step-tab" onclick="setAssignStep(this,2)"><span class="assign-step-num">2</span>Assignees</div>
+          <div class="assign-step-tab" onclick="setAssignStep(this,3)"><span class="assign-step-num">3</span>Schedule</div>
+          <div class="assign-step-tab" onclick="setAssignStep(this,4)"><span class="assign-step-num">4</span>Notifications</div>
+        </div>
+
+        <div class="assign-body" id="assign-step-1">
+          <div class="field"><label>Search Forms</label><input placeholder="Search form templates..."></div>
+          <div style="display:flex;flex-direction:column;gap:6px;">
+            <div onclick="selectForm(this)" style="padding:13px 16px;border-radius:9px;border:2px solid var(--blue);background:var(--blue-pale);cursor:pointer;display:flex;align-items:center;justify-content:space-between;transition:all 0.15s;">
+              <div><div style="font-size:13.5px;font-weight:600;color:var(--blue);">Server Deployment Checklist</div><div style="font-size:11.5px;color:var(--ink-muted);font-family:'DM Mono',monospace;margin-top:2px;">6 fields · Last used Mar 4</div></div>
+              <span class="tag tag-blue" style="font-size:10px;">Selected ✓</span>
+            </div>
+            <div onclick="selectForm(this)" style="padding:13px 16px;border-radius:9px;border:1.5px solid var(--border);background:#FDFAF5;cursor:pointer;display:flex;align-items:center;justify-content:space-between;transition:all 0.15s;" onmouseover="this.style.borderColor='rgba(37,99,235,0.3)'" onmouseout="this.style.borderColor='var(--border)'">
+              <div><div style="font-size:13.5px;font-weight:500;">Daily Bug Report Form</div><div style="font-size:11.5px;color:var(--ink-muted);font-family:'DM Mono',monospace;margin-top:2px;">7 fields · Last used Mar 9</div></div>
+              <span class="tag tag-muted" style="font-size:10px;">Checklist</span>
+            </div>
+            <div onclick="selectForm(this)" style="padding:13px 16px;border-radius:9px;border:1.5px solid var(--border);background:#FDFAF5;cursor:pointer;display:flex;align-items:center;justify-content:space-between;transition:all 0.15s;" onmouseover="this.style.borderColor='rgba(37,99,235,0.3)'" onmouseout="this.style.borderColor='var(--border)'">
+              <div><div style="font-size:13.5px;font-weight:500;">Bug Incident Report</div><div style="font-size:11.5px;color:var(--ink-muted);font-family:'DM Mono',monospace;margin-top:2px;">9 fields · Last used Feb 28</div></div>
+              <span class="tag tag-muted" style="font-size:10px;">Report</span>
+            </div>
+            <div onclick="selectForm(this)" style="padding:13px 16px;border-radius:9px;border:1.5px solid var(--border);background:#FDFAF5;cursor:pointer;display:flex;align-items:center;justify-content:space-between;transition:all 0.15s;" onmouseover="this.style.borderColor='rgba(37,99,235,0.3)'" onmouseout="this.style.borderColor='var(--border)'">
+              <div><div style="font-size:13.5px;font-weight:500;">Sprint Handover Log</div><div style="font-size:11.5px;color:var(--ink-muted);font-family:'DM Mono',monospace;margin-top:2px;">5 fields · Last used Mar 10</div></div>
+              <span class="tag tag-muted" style="font-size:10px;">Log</span>
+            </div>
+          </div>
+          <div style="margin-top:12px;display:flex;justify-content:flex-end;"><button class="btn btn-blue btn-sm" onclick="goAssignStep2()">Next: Select Assignees →</button></div>
+        </div>
+
+        <div class="assign-body" id="assign-step-2" style="display:none;">
+          <div style="display:flex;gap:6px;margin-bottom:14px;">
+            <button class="recur-btn active" style="flex:1;text-align:center;" onclick="this.classList.toggle('active')">Individuals</button>
+            <button class="recur-btn" style="flex:1;text-align:center;" onclick="this.classList.toggle('active')">Teams / Groups</button>
+          </div>
+          <div class="assignee-grid">
+            <div class="assignee-card selected" onclick="toggleAssignee(this)"><div class="avatar av-green" style="width:28px;height:28px;font-size:10px;">AP</div><div><div class="assignee-name">A. Patel</div><div class="assignee-role">Backend Engineer</div></div><div class="assignee-check"></div></div>
+            <div class="assignee-card selected" onclick="toggleAssignee(this)"><div class="avatar av-amber" style="width:28px;height:28px;font-size:10px;">JK</div><div><div class="assignee-name">J. Kim</div><div class="assignee-role">Frontend Engineer</div></div><div class="assignee-check"></div></div>
+            <div class="assignee-card" onclick="toggleAssignee(this)"><div class="avatar av-blue" style="width:28px;height:28px;font-size:10px;">LC</div><div><div class="assignee-name">L. Chen</div><div class="assignee-role">QA Engineer</div></div><div class="assignee-check"></div></div>
+            <div class="assignee-card" onclick="toggleAssignee(this)"><div class="avatar av-cyan" style="width:28px;height:28px;font-size:10px;">MR</div><div><div class="assignee-name">M. Rivera</div><div class="assignee-role">DevOps Engineer</div></div><div class="assignee-check"></div></div>
+          </div>
+          <div style="margin-top:14px;display:flex;justify-content:space-between;"><button class="btn btn-ghost btn-sm" onclick="goAssignStep(1)">← Back</button><button class="btn btn-blue btn-sm" onclick="goAssignStep(3)">Next: Schedule →</button></div>
+        </div>
+
+        <div class="assign-body" id="assign-step-3" style="display:none;">
+          <div class="field"><label>Priority Level</label>
+            <div class="priority-btns">
+              <div class="priority-btn" onclick="setPriority(this,'low')">🟢 Low</div>
+              <div class="priority-btn sel-med" onclick="setPriority(this,'med')">🟡 Medium</div>
+              <div class="priority-btn" onclick="setPriority(this,'high')">🔴 High</div>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div class="field"><label>Due Date</label><input type="date" value="2026-03-15"></div>
+            <div class="field"><label>Due Time</label><input type="time" value="17:00"></div>
+          </div>
+          <div class="field"><label>Recurrence</label>
+            <div class="recur-btns" style="flex-wrap:wrap;">
+              <button class="recur-btn active" onclick="setRecur(this)">One-time</button>
+              <button class="recur-btn" onclick="setRecur(this)">Daily</button>
+              <button class="recur-btn" onclick="setRecur(this)">Weekly</button>
+              <button class="recur-btn" onclick="setRecur(this)">Monthly</button>
+            </div>
+          </div>
+          <div style="margin-top:6px;display:flex;justify-content:space-between;"><button class="btn btn-ghost btn-sm" onclick="goAssignStep(2)">← Back</button><button class="btn btn-blue btn-sm" onclick="goAssignStep(4)">Next: Notifications →</button></div>
+        </div>
+
+        <div class="assign-body" id="assign-step-4" style="display:none;">
+          <div style="margin-bottom:14px;font-size:13px;font-weight:600;color:var(--ink);">Notify assignees</div>
+          <div class="notif-check"><input type="checkbox" checked><div><div class="notif-check-label">Send notification on assignment</div><div class="notif-check-sub">Employees receive an alert when the task is sent</div></div></div>
+          <div class="notif-check"><input type="checkbox" checked><div><div class="notif-check-label">Reminder 24 hours before due</div><div class="notif-check-sub">Automatic reminder the day before the deadline</div></div></div>
+          <div class="notif-check"><input type="checkbox"><div><div class="notif-check-label">Overdue escalation to management</div><div class="notif-check-sub">Alert supervisors if task is not completed on time</div></div></div>
+          <div style="margin-top:14px;" class="field"><label>Optional message to assignees</label><textarea placeholder="Add any specific instructions or context for this task..."></textarea></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <button class="btn btn-ghost btn-sm" onclick="goAssignStep(3)">← Back</button>
+            <button class="btn btn-emerald" onclick="showSendConfirm()">Send Assignment ✓</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Summary panel -->
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <div class="card"><div class="card-inner"><div class="section-title" style="margin-bottom:12px;">Assignment Summary</div>
+        <div class="assign-summary">
+          <div class="summary-row"><span class="summary-label">Form</span><span class="summary-val">Server Deployment</span></div>
+          <div class="summary-row"><span class="summary-label">Assignees</span><span class="summary-val">A. Patel, J. Kim</span></div>
+          <div class="summary-row"><span class="summary-label">Priority</span><span class="tag tag-amber" style="font-size:10px;">Medium</span></div>
+          <div class="summary-row"><span class="summary-label">Due</span><span class="summary-val">Mar 15, 2026</span></div>
+          <div class="summary-row"><span class="summary-label">Recurrence</span><span class="summary-val">One-time</span></div>
+        </div>
+      </div></div>
+      <div class="card"><div class="card-inner"><div class="section-title" style="margin-bottom:10px;">Recently Assigned</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div style="padding:10px;border-radius:8px;background:var(--sand);border:1px solid var(--border);font-size:12px;"><div style="font-weight:600;margin-bottom:2px;">Daily Standup Report</div><div style="color:var(--ink-muted);font-family:'DM Mono',monospace;font-size:10.5px;">All Team · Due today</div></div>
+          <div style="padding:10px;border-radius:8px;background:var(--sand);border:1px solid var(--border);font-size:12px;"><div style="font-weight:600;margin-bottom:2px;">Code Review — Auth Module</div><div style="color:var(--ink-muted);font-family:'DM Mono',monospace;font-size:10.5px;">L. Chen · Due Mar 12</div></div>
+          <div style="padding:10px;border-radius:8px;background:var(--sand);border:1px solid var(--border);font-size:12px;"><div style="font-weight:600;margin-bottom:2px;">CI/CD Pipeline Setup</div><div style="color:var(--ink-muted);font-family:'DM Mono',monospace;font-size:10.5px;">M. Rivera · Due Mar 8</div></div>
+        </div>
+      </div></div>
+      <div class="card"><div class="card-inner" style="padding:14px 16px;"><button class="btn btn-ghost btn-sm" style="width:100%;justify-content:center;" onclick="showApp('formbuilder')">+ Create New Form Template</button></div></div>
+    </div>
+  </div>
+</template>
+
+
+<!-- ═══ TOAST / CONFIRM OVERLAY ════════════════════════════════════════ -->
+<div id="toast" style="position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--sand);padding:12px 24px;border-radius:100px;font-size:13px;font-weight:500;box-shadow:var(--shadow-lg);z-index:999;opacity:0;transition:opacity 0.25s;pointer-events:none;"></div>
+
+
+<script>
+/* ── PAGE / APP ROUTING ── */
+let currentApp = 'dashboard';
+
+function showPage(id) {
+  document.querySelectorAll('.page, .page-fill').forEach(p => p.classList.remove('active'));
+  const t = document.getElementById(id);
+  if (t) t.classList.add('active');
+  window.scrollTo(0,0);
+  const mainNav = document.getElementById('main-nav');
+  // Show landing nav links only on landing page; hide inside app
+  if (mainNav) mainNav.style.display = (id === 'landing') ? 'flex' : 'none';
+}
+
+function showApp(screen) {
+  // show app shell
+  document.querySelectorAll('.page, .page-fill').forEach(p => p.classList.remove('active'));
+  document.getElementById('app').classList.add('active');
+  // Hide top nav links inside the app — sidebar handles all navigation
+  const mainNav = document.getElementById('main-nav');
+  if (mainNav) mainNav.style.display = 'none';
+
+  currentApp = screen;
+  const main = document.getElementById('app-main');
+  const tpl = document.getElementById('tpl-' + screen);
+  if (!tpl) return;
+  main.innerHTML = '';
+  main.appendChild(tpl.content.cloneNode(true));
+  main.classList.remove('fade-in');
+  void main.offsetWidth;
+  main.classList.add('fade-in');
+
+  // sidebar active state
+  document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+  const sb = document.getElementById('sb-' + screen);
+  if (sb) sb.classList.add('active');
+
+  // nav active state
+  document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+  const nl = document.getElementById('nl-' + screen);
+  if (nl) nl.classList.add('active');
+
+  window.scrollTo(0,0);
+}
+
+function navScrollTo(id) {
+  if (!document.getElementById('landing').classList.contains('active')) {
+    showPage('landing');
+    setTimeout(() => { const el = document.getElementById(id); if(el) el.scrollIntoView({behavior:'smooth'}); }, 80);
+  } else {
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({behavior:'smooth'});
+  }
+}
+
+/* ── INTERACTIVE HELPERS ── */
+
+function setFilter(el) {
+  document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function setRange(el) {
+  el.parentElement.querySelectorAll('.btn').forEach(b => {
+    b.style.background = ''; b.style.color = ''; b.style.border = '1px solid var(--border)';
+  });
+  el.style.background = 'var(--ink)'; el.style.color = 'var(--sand)'; el.style.border = 'none';
+}
+
+function toggleCheck(item) {
+  const box = item.querySelector('.checklist-box');
+  const text = item.querySelector('.checklist-text');
+  box.classList.toggle('checked');
+  text.classList.toggle('checked');
+  updateChecklistProgress();
+}
+
+function updateChecklistProgress() {
+  const all = document.querySelectorAll('.checklist-item');
+  const done = document.querySelectorAll('.checklist-box.checked').length;
+  const total = all.length;
+  const pct = total ? Math.round(done/total*100) : 0;
+  const bar = document.getElementById('checklist-progress');
+  const bar2 = document.getElementById('prog-bar2');
+  const lbl = document.getElementById('checklist-count');
+  const lbl2 = document.getElementById('prog-label2');
+  if (bar) bar.style.width = pct + '%';
+  if (bar2) bar2.style.width = pct + '%';
+  if (lbl) lbl.textContent = done + ' of ' + total + ' items completed';
+  if (lbl2) lbl2.textContent = pct + '%';
+}
+
+function selectField(el) {
+  document.querySelectorAll('.form-field-block').forEach(f => f.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function addField(type) {
+  const container = document.getElementById('fb-fields');
+  if (!container) return;
+  const icons = {'Text Input':'🔤','Number':'🔢','Dropdown':'▼','Checkbox':'☑','Date':'📅','File Upload':'📎','Signature':'✍️','Photo':'📷','Textarea':'📝','Rating':'⭐'};
+  const div = document.createElement('div');
+  div.className = 'form-field-block';
+  div.onclick = function(){ selectField(this); };
+  div.innerHTML = `<div class="field-block-label">${icons[type]||''} New ${type} Field</div><div class="field-block-type">${type.toUpperCase()}</div><div class="field-block-preview"></div>`;
+  container.appendChild(div);
+  selectField(div);
+  div.scrollIntoView({behavior:'smooth',block:'nearest'});
+  showToast('Field added: ' + type);
+}
+
+function deleteSelectedField() {
+  const sel = document.querySelector('.form-field-block.selected');
+  if (sel) { sel.remove(); showToast('Field deleted'); }
+}
+
+function loadTemplate() { showToast('Template loaded!'); }
+
+function setRecur(btn) {
+  btn.parentElement.querySelectorAll('.recur-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function toggleAssignee(card) {
+  card.classList.toggle('selected');
+}
+
+function selectForm(el) {
+  el.closest('.assign-body').querySelectorAll('[onclick^="selectForm"]').forEach(c => {
+    c.style.border = '1.5px solid var(--border)'; c.style.background = '#FDFAF5';
+    const tag = c.querySelector('.tag'); if(tag){tag.textContent=''; tag.className='tag tag-muted'; tag.style.fontSize='10px';}
+  });
+  el.style.border = '2px solid var(--blue)'; el.style.background = 'var(--blue-pale)';
+  const formName = el.querySelector('[style*="font-weight:600"]') || el.querySelector('[style*="font-weight:500"]');
+  const tag = el.querySelector('.tag');
+  if(tag){ tag.textContent = 'Selected ✓'; tag.className = 'tag tag-blue'; }
+}
+
+function setAssignStep(tab, step) {
+  document.querySelectorAll('.assign-step-tab').forEach(t => t.classList.remove('active'));
+  tab.classList.add('active');
+  for(let i=1;i<=4;i++){
+    const el = document.getElementById('assign-step-'+i);
+    if(el) el.style.display = (i===step) ? '' : 'none';
+  }
+}
+
+function goAssignStep(step) {
+  const tabs = document.querySelectorAll('.assign-step-tab');
+  if(tabs[step-1]) { tabs.forEach(t=>t.classList.remove('active')); tabs[step-1].classList.add('active'); }
+  for(let i=1;i<=4;i++){
+    const el = document.getElementById('assign-step-'+i);
+    if(el) el.style.display = (i===step) ? '' : 'none';
+  }
+}
+
+function goAssignStep2() { goAssignStep(2); }
+
+function setPriority(btn, level) {
+  const clsMap = {low:'sel-low', med:'sel-med', high:'sel-high'};
+  btn.parentElement.querySelectorAll('.priority-btn').forEach(b => {
+    b.classList.remove('sel-low','sel-med','sel-high');
+  });
+  btn.classList.add(clsMap[level]);
+}
+
+function showSendConfirm() {
+  showToast('✓ Task assigned successfully! Notifications sent.');
+  setTimeout(()=>showApp('dashboard'), 1800);
+}
+
+function showSubmitConfirm() {
+  showToast('✓ Form submitted! Supervisor notified for review.');
+  setTimeout(()=>showApp('tasks'), 1800);
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.style.opacity = '1';
+  setTimeout(()=>{ t.style.opacity='0'; }, 2800);
+}
+
+/* ── INIT ── */
+showPage('landing');
+</script>
+</body>
+</html>

@@ -1,0 +1,105 @@
+.sidebar {
+  width: 216px;
+  background: #F7F2E9;
+  border-right: 1px solid rgba(26, 25, 22, 0.10);
+  padding: 16px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  overflow-y: auto;
+  flex-shrink: 0;
+  height: 100vh;
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 1;
+}
+
+.sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 10px;
+  border-radius: 7px;
+  font-size: 13px;
+  color: #38342E;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-weight: 400;
+  position: relative;
+}
+
+.sidebar-item:hover {
+  background: #EAE4D8;
+  color: #1A1916;
+}
+
+.sidebar-item.active {
+  background: #1A1916;
+  color: #F4F0E8;
+  font-weight: 500;
+}
+
+.sidebar-item .s-icon {
+  width: 16px;
+  text-align: center;
+  font-size: 13px;
+  opacity: 0.65;
+  flex-shrink: 0;
+}
+
+.sidebar-item.active .s-icon {
+  opacity: 1;
+}
+
+.sidebar-label {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* User Avatar Section */
+.sidebar-user {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s;
+  margin-top: auto;
+}
+
+.sidebar-user:hover {
+  background: #EAE4D8;
+}
+
+.user-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10.5px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.user-avatar.av-ink {
+  background: #1A1916;
+  color: #F4F0E8;
+}
+
+.user-name {
+  font-size: 12px;
+  font-weight: 500;
+  color: #1A1916;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
