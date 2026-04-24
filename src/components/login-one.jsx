@@ -20,11 +20,18 @@ export default function LoginOne() {
     useEffect(() => {
         console.log('Login useEffect - user:', user?.email, 'role:', role, 'loading:', loading)
 
-        // Only redirect when loading is complete and user + role are both set
-        if (loading === false && user && role) {
-            console.log('Navigating to dashboard...')
-            const redirectUrl = role === 'supervisor' ? `/dashboard/${userProfile?.teamId || '1'}` : '/tasks'
-            navigate(redirectUrl)
+        // Only redirect when loading is complete
+        if (loading === false && user) {
+            if (role === null) {
+                // First-time user without a role - show role selection
+                console.log('Navigating to role selection...')
+                navigate('/role-selection')
+            } else if (role) {
+                // Existing user with a role - go to dashboard
+                console.log('Navigating to dashboard...')
+                const redirectUrl = role === 'supervisor' ? `/dashboard/${userProfile?.teamId || '1'}` : '/tasks'
+                navigate(redirectUrl)
+            }
         }
     }, [user, role, loading, userProfile, navigate])
 

@@ -20,9 +20,13 @@ export default function SignUpOne() {
     const { signUpWithEmail, user, role, loading } = useAuth()
 
     useEffect(() => {
-        if (loading === false && user && role) {
-            const redirectUrl = role === 'supervisor' ? '/dashboard/1' : '/tasks'
-            navigate(redirectUrl)
+        if (loading === false && user) {
+            if (role === null) {
+                navigate('/role-selection')
+            } else if (role) {
+                const redirectUrl = role === 'supervisor' ? '/dashboard/1' : '/tasks'
+                navigate(redirectUrl)
+            }
         }
     }, [user, role, loading, navigate])
 

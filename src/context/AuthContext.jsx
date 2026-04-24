@@ -34,17 +34,17 @@ export function AuthProvider({ children }) {
                         setUserProfile(userData)
                         setRole(userData.role)
                     } else {
-                        console.log('User doc not found, creating...')
+                        console.log('User doc not found, creating without role (first-time user)...')
                         const newUserData = {
                             name: firebaseUser.displayName || firebaseUser.email,
                             email: firebaseUser.email,
-                            role: 'employee',
+                            role: null,
                             teamId: null,
                             createdAt: serverTimestamp(),
                         }
                         await setDoc(userDocRef, newUserData)
                         setUserProfile(newUserData)
-                        setRole('employee')
+                        setRole(null)
                     }
                 } catch (error) {
                     console.error('Error fetching user profile:', error)
@@ -91,7 +91,7 @@ export function AuthProvider({ children }) {
             const newUserData = {
                 name: name || firebaseUser.email,
                 email: firebaseUser.email,
-                role: 'employee',
+                role: null,
                 teamId: null,
                 createdAt: serverTimestamp(),
             }

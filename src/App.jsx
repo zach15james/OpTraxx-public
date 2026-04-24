@@ -7,6 +7,7 @@ import Landing from './pages/Landing'
 import Login from './pages/Login'
 import Signup from './pages/Signup'
 import ForgotPassword from './pages/ForgotPassword'
+import RoleSelectionPage from './pages/RoleSelectionPage'
 import Dashboard from './pages/Dashboard'
 import Team from './pages/Team'
 import Forms from './pages/Forms'
@@ -41,6 +42,7 @@ function App() {
                     <Route path="/login" element={<Login />} />
                     <Route path="/signup" element={<Signup />} />
                     <Route path="/forgot-password" element={<ForgotPassword />} />
+                    <Route path="/role-selection" element={<RoleSelectionPage />} />
 
                     {/* Protected routes - authenticated users (all roles) */}
                     <Route element={<ProtectedRoute />}>
