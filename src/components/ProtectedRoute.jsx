@@ -1,10 +1,16 @@
 import { Navigate, Outlet } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
 
-export default function ProtectedRoute() {
-    const { user } = useAuth()
+export default function ProtectedRoute({ allowedRoles }) {
+    const { user, role, loading } = useAuth()
 
-    if (user === undefined) return null // still loading auth state
+    if (loading || user === undefined) return null
 
-    return user ? <Outlet /> : <Navigate to="/login" replace />
+    if (!user) return <Navigate to="/login" replace />
+
+    if (allowedRoles && !allowedRoles.includes(role)) {
+        return <Navigate to="/login" replace />
+    }
+
+    return <Outlet />
 }

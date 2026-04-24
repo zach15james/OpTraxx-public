@@ -1,144 +1,39 @@
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { ArrowUp, ArrowDown, CheckCircle2, AlertCircle, Clock, TrendingUp } from 'lucide-react'
+import { useAuth } from '@/context/AuthContext'
+import { useDashboard } from '@/hooks/useDashboard'
 
 export default function Dashboard() {
-  // Mock data
-  const user = {
-    name: 'Jordan',
-    role: 'Supervisor',
+  const { teamId } = useParams()
+  const { user, userProfile } = useAuth()
+  const { stats, activeTasks, teamMembers, recentActivity, loading } = useDashboard({ uid: user?.uid, teamId })
+
+  if (loading) {
+    return <div className="flex items-center justify-center h-screen">Loading...</div>
   }
 
-  const stats = [
-    {
-      label: 'Open Tasks',
-      value: '12',
-      change: '+3 added today',
-      changeType: 'neutral',
-      icon: Clock,
-      color: 'text-blue-600',
-    },
-    {
-      label: 'Completed',
-      value: '47',
-      change: 'This week',
-      changeType: 'positive',
-      icon: CheckCircle2,
-      color: 'text-green-600',
-    },
-    {
-      label: 'Overdue',
-      value: '3',
-      change: 'Needs attention',
-      changeType: 'negative',
-      icon: AlertCircle,
-      color: 'text-red-600',
-    },
-    {
-      label: 'Completion Rate',
-      value: '79%',
-      change: '+3% vs last week',
-      changeType: 'positive',
-      icon: TrendingUp,
-      color: 'text-emerald-600',
-    },
-  ]
+  const statIcons = {
+    'Open Tasks': Clock,
+    'Completed': CheckCircle2,
+    'Overdue': AlertCircle,
+    'Completion Rate': TrendingUp,
+  }
 
-  const activeTasks = [
-    {
-      id: 1,
-      title: 'Server Patch Deployment — Prod',
-      team: 'A. Patel • Engineering',
-      status: 'In Progress',
-      statusColor: 'bg-blue-100 text-blue-800',
-      dueDate: 'Mar 5',
-    },
-    {
-      id: 2,
-      title: 'Fix Critical Bug — Auth Service',
-      team: 'J. Kim • Platform Engineering',
-      status: 'Overdue',
-      statusColor: 'bg-red-100 text-red-800',
-      dueDate: 'Mar 2',
-    },
-    {
-      id: 3,
-      title: 'Code Review — Payment Module',
-      team: 'L. Chen • Safety',
-      status: 'Done',
-      statusColor: 'bg-green-100 text-green-800',
-      dueDate: 'Mar 4',
-      completed: true,
-    },
-    {
-      id: 4,
-      title: 'Deploy Monitoring Stack — Prod',
-      team: 'M. Rivera • DevOps',
-      status: 'Pending',
-      statusColor: 'bg-yellow-100 text-yellow-800',
-      dueDate: 'Mar 8',
-    },
-    {
-      id: 5,
-      title: 'Onboarding checklist — New hire T. Brooks',
-      team: 'Completed by Onboarding Team',
-      status: 'Done',
-      statusColor: 'bg-green-100 text-green-800',
-      dueDate: 'Mar 4',
-      completed: true,
-    },
-  ]
+  const statColors = {
+    'Open Tasks': 'text-blue-600',
+    'Completed': 'text-green-600',
+    'Overdue': 'text-red-600',
+    'Completion Rate': 'text-emerald-600',
+  }
 
-  const teamMembers = [
-    {
-      initials: 'AP',
-      name: 'A. Patel',
-      role: 'Senior Engineer',
-      open: '3 open',
-      openColor: 'text-emerald-600',
-    },
-    {
-      initials: 'JK',
-      name: 'J. Kim',
-      role: 'Frontend Engineer',
-      open: '1 overdue',
-      openColor: 'text-red-600',
-    },
-    {
-      initials: 'LC',
-      name: 'L. Chen',
-      role: 'QA Engineer',
-      open: 'All clear',
-      openColor: 'text-emerald-600',
-    },
-    {
-      initials: 'MR',
-      name: 'M. Rivera',
-      role: 'DevOps Engineer',
-      open: '1 pending',
-      openColor: 'text-yellow-600',
-    },
-  ]
-
-  const recentActivity = [
-    {
-      initials: 'LC',
-      name: 'L. Chen',
-      action: 'completed',
-      task: 'Code Review — Auth Module',
-      time: 'Just now',
-    },
-    {
-      initials: 'AP',
-      name: 'A. Patel',
-      action: 'updated',
-      task: 'Database Migration v2.1',
-      time: '2 hours ago',
-    },
-  ]
+  const enrichedStats = stats.map(stat => ({
+    ...stat,
+    icon: statIcons[stat.label] || Clock,
+    color: statColors[stat.label] || 'text-blue-600',
+  }))
 
   return (
     <div className="space-y-8">
@@ -146,10 +41,10 @@ export default function Dashboard() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-slate-900">
-            Good morning, {user.name} 👋
+            Good morning, {(userProfile?.name || 'User').split(' ')[0]} 👋
           </h1>
           <p className="text-slate-600 mt-1">
-            Tuesday, March 10 • {user.role} • <span className="font-medium">12 open tasks</span>
+            {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })} • Supervisor • <span className="font-medium">{activeTasks.length} open tasks</span>
           </p>
         </div>
         <Link to="/assign">
@@ -161,7 +56,7 @@ export default function Dashboard() {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-4 gap-6">
-        {stats.map((stat) => {
+        {enrichedStats.map((stat) => {
           const Icon = stat.icon
           return (
             <Card key={stat.label} className="p-6 border-slate-200 hover:shadow-md transition-shadow">

@@ -12,11 +12,19 @@ import {
   Flame,
   ChevronRight,
 } from 'lucide-react'
+import { useAuth } from '@/context/AuthContext'
+import { useEscalations } from '@/hooks/useEscalations'
 
 export default function Escalations() {
+  const { user } = useAuth()
+  const { escalations: firestoreEscalations, loading } = useEscalations({ uid: user?.uid })
   const [selectedEscalation, setSelectedEscalation] = useState(null)
 
-  const escalations = [
+  if (loading) {
+    return <div className="flex items-center justify-center h-screen">Loading...</div>
+  }
+
+  const escalations = firestoreEscalations.length > 0 ? firestoreEscalations : [
     {
       id: 1,
       title: 'Server Patch Deployment — Critical',

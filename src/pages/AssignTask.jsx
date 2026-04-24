@@ -1,16 +1,24 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Search, ChevronRight, Calendar, Bell } from 'lucide-react'
+import { useAuth } from '@/context/AuthContext'
+import { db } from '@/lib/firebase'
+import { collection, query, where, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore'
 
 export default function AssignTask() {
+  const { user, userProfile } = useAuth()
   const [currentStep, setCurrentStep] = useState('select-form')
   const [selectedForm, setSelectedForm] = useState(null)
   const [selectedAssignees, setSelectedAssignees] = useState([])
   const [schedule, setSchedule] = useState('one-time')
   const [dueDate, setDueDate] = useState('Mar 15, 2026')
   const [priority, setPriority] = useState('Medium')
+  const [teamMembers, setTeamMembers] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [publishing, setPublishing] = useState(false)
+  const [successMessage, setSuccessMessage] = useState('')
 
   const forms = [
     {
@@ -43,19 +51,94 @@ export default function AssignTask() {
     },
   ]
 
-  const teamMembers = [
-    { id: 1, initials: 'AP', name: 'A. Patel', role: 'Senior Engineer' },
-    { id: 2, initials: 'JK', name: 'J. Kim', role: 'Frontend Engineer' },
-    { id: 3, initials: 'LC', name: 'L. Chen', role: 'QA Engineer' },
-    { id: 4, initials: 'MR', name: 'M. Rivera', role: 'DevOps Engineer' },
-  ]
-
   const tabs = [
     { id: 'select-form', label: '1 Select Form', number: '1' },
     { id: 'assignees', label: '2 Assignees', number: '2' },
     { id: 'schedule', label: '3 Schedule', number: '3' },
     { id: 'notifications', label: '4 Notifications', number: '4' },
   ]
+
+  // Fetch team members from Firestore with real-time updates
+  useEffect(() => {
+    if (!userProfile?.teamId) {
+      setLoading(false)
+      return
+    }
+
+    const membersQuery = query(
+      collection(db, 'users'),
+      where('teamId', '==', userProfile.teamId),
+      where('role', '==', 'employee')
+    )
+
+    const unsubscribe = onSnapshot(membersQuery, (snapshot) => {
+      const members = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        initials: (doc.data().name || doc.data().email).split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2),
+        name: doc.data().name || doc.data().email,
+        role: doc.data().role || 'Team Member',
+      }))
+
+      setTeamMembers(members)
+      setLoading(false)
+    })
+
+    return unsubscribe
+  }, [userProfile?.teamId])
+
+  const handlePublishTasks = async () => {
+    if (!selectedForm || selectedAssignees.length === 0 || !user) {
+      return
+    }
+
+    setPublishing(true)
+    setSuccessMessage('')
+
+    try {
+      // Parse due date (simple parsing for "Mar 15, 2026" format)
+      const dueDateObj = new Date(dueDate)
+
+      // Create a task for each selected assignee
+      const taskPromises = selectedAssignees.map((assigneeId) =>
+        addDoc(collection(db, 'tasks'), {
+          name: selectedForm.name,
+          formId: selectedForm.id,
+          assigneeId: assigneeId,
+          assignedBy: user.uid,
+          status: 'pending',
+          priority: priority,
+          dueDate: dueDateObj,
+          schedule: schedule,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+        })
+      )
+
+      await Promise.all(taskPromises)
+
+      setSuccessMessage(`✓ Successfully assigned "${selectedForm.name}" to ${selectedAssignees.length} team member${selectedAssignees.length > 1 ? 's' : ''}!`)
+
+      // Reset form after 2 seconds
+      setTimeout(() => {
+        setCurrentStep('select-form')
+        setSelectedForm(null)
+        setSelectedAssignees([])
+        setSchedule('one-time')
+        setDueDate('Mar 15, 2026')
+        setPriority('Medium')
+        setSuccessMessage('')
+      }, 2000)
+    } catch (error) {
+      console.error('Error publishing tasks:', error)
+      setSuccessMessage('✗ Failed to assign tasks. Please try again.')
+    } finally {
+      setPublishing(false)
+    }
+  }
+
+  if (loading) {
+    return <div className="flex items-center justify-center h-screen">Loading team members...</div>
+  }
 
   return (
     <div className="space-y-6">
@@ -68,6 +151,14 @@ export default function AssignTask() {
           </p>
         </div>
       </div>
+
+      {successMessage && (
+        <Card className={`p-4 ${successMessage.includes('Successfully') ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
+          <p className={successMessage.includes('Successfully') ? 'text-green-700' : 'text-red-700'}>
+            {successMessage}
+          </p>
+        </Card>
+      )}
 
       <div className="grid grid-cols-3 gap-6">
         {/* Main Content */}
@@ -139,44 +230,52 @@ export default function AssignTask() {
           {currentStep === 'assignees' && (
             <div className="space-y-4">
               <p className="text-sm text-slate-600">Select which team members should complete this task</p>
-              <div className="grid grid-cols-2 gap-3">
-                {teamMembers.map((member) => (
-                  <Card
-                    key={member.id}
-                    onClick={() => {
-                      setSelectedAssignees(
+              {teamMembers.length === 0 ? (
+                <Card className="p-8 text-center border-slate-200">
+                  <p className="text-slate-600 mb-2">No team members found</p>
+                  <p className="text-sm text-slate-500">You need to add employees to your team first</p>
+                </Card>
+              ) : (
+                <div className="grid grid-cols-2 gap-3">
+                  {teamMembers.map((member) => (
+                    <Card
+                      key={member.id}
+                      onClick={() => {
+                        setSelectedAssignees(
+                          selectedAssignees.includes(member.id)
+                            ? selectedAssignees.filter((id) => id !== member.id)
+                            : [...selectedAssignees, member.id]
+                        )
+                      }}
+                      className={`p-4 border cursor-pointer transition-all hover:shadow-md ${
                         selectedAssignees.includes(member.id)
-                          ? selectedAssignees.filter((id) => id !== member.id)
-                          : [...selectedAssignees, member.id]
-                      )
-                    }}
-                    className={`p-4 border cursor-pointer transition-all hover:shadow-md ${
-                      selectedAssignees.includes(member.id)
-                        ? 'border-blue-500 bg-blue-50'
-                        : 'border-slate-200 hover:border-slate-300'
-                    }`}
-                  >
-                    <div className="flex items-start gap-3">
-                      <Avatar className="h-10 w-10 bg-blue-600 text-white text-sm font-semibold flex items-center justify-center flex-shrink-0">
-                        <AvatarFallback className="bg-blue-600 text-white text-sm">
-                          {member.initials}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1">
-                        <p className="font-medium text-slate-900">{member.name}</p>
-                        <p className="text-xs text-slate-600">{member.role}</p>
+                          ? 'border-blue-500 bg-blue-50'
+                          : 'border-slate-200 hover:border-slate-300'
+                      }`}
+                    >
+                      <div className="flex items-start gap-3">
+                        <Avatar className="h-10 w-10 bg-blue-600 text-white text-sm font-semibold flex items-center justify-center flex-shrink-0">
+                          <AvatarFallback className="bg-blue-600 text-white text-sm">
+                            {member.initials}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1">
+                          <p className="font-medium text-slate-900">{member.name}</p>
+                          <p className="text-xs text-slate-600">{member.role}</p>
+                        </div>
+                        {selectedAssignees.includes(member.id) && (
+                          <div className="text-blue-600">✓</div>
+                        )}
                       </div>
-                      {selectedAssignees.includes(member.id) && (
-                        <div className="text-blue-600">✓</div>
-                      )}
-                    </div>
-                  </Card>
-                ))}
-              </div>
+                    </Card>
+                  ))}
+                </div>
+              )}
               <div className="text-right pt-4">
                 <Button
                   onClick={() => setCurrentStep('schedule')}
-                  className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2 ml-auto"
+                  disabled={selectedAssignees.length === 0}
+                  className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2 ml-auto disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Next: Select Assignees
                   <ChevronRight size={16} />
@@ -289,8 +388,12 @@ export default function AssignTask() {
               </div>
 
               <div className="text-right pt-4">
-                <Button className="bg-blue-600 hover:bg-blue-700 text-white">
-                  Publish Task Assignment
+                <Button
+                  onClick={handlePublishTasks}
+                  disabled={publishing}
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  {publishing ? 'Publishing...' : 'Publish Task Assignment'}
                 </Button>
               </div>
             </div>

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Logo } from '@/components/logo'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -6,12 +6,34 @@ import { Label } from '@/components/ui/label'
 import { Link, useNavigate } from 'react-router-dom'
 import { signInWithEmailAndPassword } from 'firebase/auth'
 import { auth } from '@/lib/firebase'
+import { useAuth } from '@/context/AuthContext'
 
 export default function LoginOne() {
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
+    const [showPassword, setShowPassword] = useState(false)
     const [error, setError] = useState('')
+    const [isLoadingGoogle, setIsLoadingGoogle] = useState(false)
     const navigate = useNavigate()
+    const { signInWithGoogle, role, userProfile, user, loading } = useAuth()
+
+    useEffect(() => {
+        console.log('Login useEffect - user:', user?.email, 'role:', role, 'loading:', loading)
+
+        // Only redirect when loading is complete
+        if (loading === false && user) {
+            if (role === null) {
+                // First-time user without a role - show role selection
+                console.log('Navigating to role selection...')
+                navigate('/role-selection')
+            } else if (role) {
+                // Existing user with a role - go to dashboard
+                console.log('Navigating to dashboard...')
+                const redirectUrl = role === 'supervisor' ? `/dashboard/${userProfile?.teamId || '1'}` : '/tasks'
+                navigate(redirectUrl)
+            }
+        }
+    }, [user, role, loading, userProfile, navigate])
 
     const handleSubmit = async (e) => {
         e.preventDefault()
@@ -21,6 +43,21 @@ export default function LoginOne() {
             navigate('/dashboard/1')
         } catch (err) {
             setError('Invalid email or password.')
+        }
+    }
+
+    const handleGoogleSignIn = async () => {
+        console.log('Google sign-in clicked')
+        setError('')
+        setIsLoadingGoogle(true)
+        try {
+            console.log('Calling signInWithGoogle...')
+            await signInWithGoogle()
+            console.log('signInWithGoogle returned')
+        } catch (err) {
+            console.error('Google sign-in error:', err)
+            setError('Failed to sign in with Google: ' + err.message)
+            setIsLoadingGoogle(false)
         }
     }
 
@@ -53,16 +90,27 @@ export default function LoginOne() {
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="password" className="block text-sm">Password</Label>
-                            <Input
-                                type="password"
-                                required
-                                name="password"
-                                id="password"
-                                placeholder="Your password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                className="ring-foreground/15 border-transparent ring-1" />
+                            <div className="flex items-center justify-between">
+                                <Label htmlFor="password" className="block text-sm">Password</Label>
+                            </div>
+                            <div className="relative">
+                                <Input
+                                    type={showPassword ? 'text' : 'password'}
+                                    required
+                                    name="password"
+                                    id="password"
+                                    placeholder="Your password"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    className="ring-foreground/15 border-transparent ring-1 pr-10" />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                                    aria-label={showPassword ? 'Hide password' : 'Show password'}>
+                                    {showPassword ? '👁️' : '👁️‍🗨️'}
+                                </button>
+                            </div>
                         </div>
 
                         {error && <p className="text-sm text-red-500">{error}</p>}
@@ -74,10 +122,33 @@ export default function LoginOne() {
                             style={{ backgroundColor: 'var(--color-primary)' }}>
                             Sign In
                         </Button>
+
+                        <div className="relative">
+                            <div className="absolute inset-0 flex items-center">
+                                <div className="w-full border-t border-slate-200"></div>
+                            </div>
+                            <div className="relative flex justify-center text-sm">
+                                <span className="px-2 bg-white text-slate-600">or</span>
+                            </div>
+                        </div>
+
+                        <Button
+                            type="button"
+                            onClick={handleGoogleSignIn}
+                            disabled={isLoadingGoogle}
+                            className="w-full bg-white border border-slate-300 text-slate-900 hover:bg-slate-50"
+                            size="default">
+                            {isLoadingGoogle ? 'Redirecting to Google...' : '🔐 Sign in with Google'}
+                        </Button>
                     </div>
                 </div>
 
-                <div className="px-6">
+                <div className="px-6 space-y-3">
+                    <p className="text-muted-foreground text-sm">
+                        <Button asChild variant="link" className="px-0" style={{ color: 'var(--color-primary)' }}>
+                            <Link to="/forgot-password">Forgot password?</Link>
+                        </Button>
+                    </p>
                     <p className="text-muted-foreground text-sm">
                         Don't have an account?
                         <Button asChild variant="link" className="px-2" style={{ color: 'var(--color-primary)' }}>
