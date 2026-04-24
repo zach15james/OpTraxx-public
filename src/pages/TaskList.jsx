@@ -5,10 +5,11 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { ChevronDown, Search } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { useTaskList } from '@/hooks/useTaskList'
+import JoinTeamCard from '@/components/JoinTeamCard'
 
 export default function TaskList() {
   const [sortBy, setSortBy] = useState('due-date')
-  const { user } = useAuth()
+  const { user, userProfile } = useAuth()
   const { tasks: firestoreTasks, loading } = useTaskList({ uid: user?.uid })
 
   if (loading) {
@@ -104,6 +105,9 @@ export default function TaskList() {
           + Create Task
         </Button>
       </div>
+
+      {/* Join Team Card - Show if no team */}
+      {!userProfile?.teamId && <JoinTeamCard />}
 
       {/* Filters and Search */}
       <Card className="p-4 border-slate-200">

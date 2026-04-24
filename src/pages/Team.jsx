@@ -15,6 +15,7 @@ import {
 } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { useTeam } from '@/hooks/useTeam'
+import InviteTeamMembers from '@/components/InviteTeamMembers'
 
 export default function Team() {
   const { teamId } = useParams()
@@ -323,6 +324,11 @@ export default function Team() {
             </div>
           </Card>
         </div>
+      </div>
+
+      {/* Invite Team Members Section */}
+      <div className="pt-6 border-t border-slate-200">
+        <InviteTeamMembers teamId={teamId} />
       </div>
     </div>
   )

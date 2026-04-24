@@ -22,9 +22,16 @@ export default function RoleSelectionPage() {
     setLoading(true)
     try {
       const userDocRef = doc(db, 'users', user.uid)
-      await updateDoc(userDocRef, { role })
 
-      const redirectUrl = role === 'supervisor' ? `/dashboard/${userProfile?.teamId || '1'}` : '/tasks'
+      // Supervisors get assigned to team "1" by default
+      const updateData = { role }
+      if (role === 'supervisor') {
+        updateData.teamId = '1'
+      }
+
+      await updateDoc(userDocRef, updateData)
+
+      const redirectUrl = role === 'supervisor' ? '/dashboard/1' : '/tasks'
       navigate(redirectUrl)
     } catch (error) {
       console.error('Error updating role:', error)
