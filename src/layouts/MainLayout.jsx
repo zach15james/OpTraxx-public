@@ -2,6 +2,7 @@ import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 import { signOut } from 'firebase/auth'
 import { auth } from '@/lib/firebase'
+import { useAuth } from '@/context/AuthContext'
 import {
   SidebarProvider,
   Sidebar,
@@ -29,14 +30,14 @@ import logoWithText from '@/assets/OpTraxx_Logo_withText.png'
 export default function MainLayout() {
   const location = useLocation()
   const navigate = useNavigate()
+  const { user: firebaseUser, userProfile } = useAuth()
 
-  // Mock user data - replace with actual user context later
   const user = {
-    name: 'Jordan Davis',
-    email: 'j.davis@company.com',
+    name: userProfile?.name || 'User',
+    email: firebaseUser?.email || '',
     avatar: null,
-    initials: 'JD',
-    role: 'Supervisor',
+    initials: (userProfile?.name || 'U').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2),
+    role: userProfile?.role === 'supervisor' ? 'Supervisor' : 'Employee',
   }
 
   // OVERVIEW: Bird's Eye View (Data & Insights)
@@ -190,53 +191,41 @@ export default function MainLayout() {
 
         {/* User Footer */}
         <SidebarFooter className="!bg-slate-950 border-t border-slate-800">
-          <div className="flex items-center gap-3 px-2 py-3">
-            <Avatar className="h-9 w-9">
-              <AvatarFallback className="bg-blue-600 text-white text-sm font-semibold">
-                {user.initials}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-white truncate">{user.name}</p>
-              <p className="text-xs text-slate-400 truncate">{user.role}</p>
-            </div>
-          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="flex items-center gap-3 px-2 py-3 w-full hover:bg-slate-800 rounded-lg transition-colors cursor-pointer">
+                <Avatar className="h-9 w-9">
+                  <AvatarFallback className="bg-blue-600 text-white text-sm font-semibold">
+                    {user.initials}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0 text-left">
+                  <p className="text-sm font-medium text-white truncate">{user.name}</p>
+                  <p className="text-xs text-slate-400 truncate">{user.role}</p>
+                </div>
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-56 mb-2">
+              <DropdownMenuLabel>
+                <div className="flex flex-col space-y-1">
+                  <p className="text-sm font-medium">{user.name}</p>
+                  <p className="text-xs text-muted-foreground">{user.email}</p>
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => navigate('/profile')}>Profile</DropdownMenuItem>
+              <DropdownMenuItem>Settings</DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={async () => { await signOut(auth); navigate('/login') }}>Log out</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </SidebarFooter>
       </Sidebar>
 
       <SidebarInset>
         {/* Topbar */}
-        <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b border-slate-200 bg-white px-8">
-          <div className="flex items-center gap-4">
-            <SidebarTrigger className="text-slate-600" />
-          </div>
-          <div className="flex items-center gap-4">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-9 w-9 rounded-full p-0">
-                  <Avatar className="h-9 w-9">
-                    <AvatarImage src={user.avatar} alt={user.name} />
-                    <AvatarFallback className="bg-blue-600 text-white text-sm font-semibold">
-                      {user.initials}
-                    </AvatarFallback>
-                  </Avatar>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel>
-                  <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium">{user.name}</p>
-                    <p className="text-xs text-muted-foreground">{user.email}</p>
-                  </div>
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => navigate('/profile')}>Profile</DropdownMenuItem>
-                <DropdownMenuItem>Settings</DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={async () => { await signOut(auth); navigate('/login') }}>Log out</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+        <header className="sticky top-0 z-10 flex h-16 items-center border-b border-slate-200 bg-white px-8">
+          <SidebarTrigger className="text-slate-600" />
         </header>
 
         {/* Main Content */}

@@ -3,11 +3,19 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { ChevronDown, Search } from 'lucide-react'
+import { useAuth } from '@/context/AuthContext'
+import { useTaskList } from '@/hooks/useTaskList'
 
 export default function TaskList() {
   const [sortBy, setSortBy] = useState('due-date')
+  const { user } = useAuth()
+  const { tasks: firestoreTasks, loading } = useTaskList({ uid: user?.uid })
 
-  const tasks = [
+  if (loading) {
+    return <div className="flex items-center justify-center h-screen">Loading...</div>
+  }
+
+  const tasks = firestoreTasks.length > 0 ? firestoreTasks : [
     {
       id: 1,
       name: 'Server Patch Deployment — Prod',

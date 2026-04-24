@@ -41,7 +41,7 @@ function App() {
                     <Route path="/signup" element={<Signup />} />
 
                     {/* Protected routes */}
-                    <Route element={<ProtectedRoute />}>
+                    <Route element={<ProtectedRoute allowedRoles={['supervisor']} />}>
                         <Route element={<MainLayout />}>
                             <Route path="/dashboard/:teamId" element={<Dashboard />} />
                             <Route path="/tasks" element={<TaskList />} />

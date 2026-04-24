@@ -2,8 +2,10 @@ import { useState } from 'react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { useAuth } from '@/context/AuthContext'
 
 export default function Profile() {
+  const { user: firebaseUser, userProfile } = useAuth()
   const [isEditing, setIsEditing] = useState(false)
   const [notifications, setNotifications] = useState({
     taskAssigned: true,
@@ -13,21 +15,27 @@ export default function Profile() {
   })
 
   const [formData, setFormData] = useState({
-    fullName: 'Jordan Davis',
-    email: 'j.davis@company.com',
+    fullName: userProfile?.name || 'User',
+    email: firebaseUser?.email || '',
     department: 'Engineering Operations',
-    role: 'Supervisor',
+    role: userProfile?.role === 'supervisor' ? 'Supervisor' : 'Employee',
   })
 
+  const getFormattedDate = (timestamp) => {
+    if (!timestamp) return 'Recently'
+    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp)
+    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short' })
+  }
+
   const user = {
-    initials: 'JD',
+    initials: (formData.fullName || 'U').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2),
     name: formData.fullName,
     role: formData.role,
     email: formData.email,
     department: formData.department,
     tasksCompleted: 47,
     teamMembers: 4,
-    since: 'Jan 2024',
+    since: getFormattedDate(userProfile?.createdAt),
   }
 
   const handleInputChange = (field, value) => {

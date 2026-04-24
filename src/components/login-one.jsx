@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Logo } from '@/components/logo'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -6,12 +6,26 @@ import { Label } from '@/components/ui/label'
 import { Link, useNavigate } from 'react-router-dom'
 import { signInWithEmailAndPassword } from 'firebase/auth'
 import { auth } from '@/lib/firebase'
+import { useAuth } from '@/context/AuthContext'
 
 export default function LoginOne() {
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [error, setError] = useState('')
+    const [isLoadingGoogle, setIsLoadingGoogle] = useState(false)
     const navigate = useNavigate()
+    const { signInWithGoogle, role, userProfile, user, loading } = useAuth()
+
+    useEffect(() => {
+        console.log('Login useEffect - user:', user?.email, 'role:', role, 'loading:', loading)
+
+        // Only redirect when loading is complete and user + role are both set
+        if (loading === false && user && role) {
+            console.log('Navigating to dashboard...')
+            const redirectUrl = role === 'supervisor' ? `/dashboard/${userProfile?.teamId || '1'}` : '/tasks'
+            navigate(redirectUrl)
+        }
+    }, [user, role, loading, userProfile, navigate])
 
     const handleSubmit = async (e) => {
         e.preventDefault()
@@ -21,6 +35,21 @@ export default function LoginOne() {
             navigate('/dashboard/1')
         } catch (err) {
             setError('Invalid email or password.')
+        }
+    }
+
+    const handleGoogleSignIn = async () => {
+        console.log('Google sign-in clicked')
+        setError('')
+        setIsLoadingGoogle(true)
+        try {
+            console.log('Calling signInWithGoogle...')
+            await signInWithGoogle()
+            console.log('signInWithGoogle returned')
+        } catch (err) {
+            console.error('Google sign-in error:', err)
+            setError('Failed to sign in with Google: ' + err.message)
+            setIsLoadingGoogle(false)
         }
     }
 
@@ -73,6 +102,24 @@ export default function LoginOne() {
                             size="default"
                             style={{ backgroundColor: 'var(--color-primary)' }}>
                             Sign In
+                        </Button>
+
+                        <div className="relative">
+                            <div className="absolute inset-0 flex items-center">
+                                <div className="w-full border-t border-slate-200"></div>
+                            </div>
+                            <div className="relative flex justify-center text-sm">
+                                <span className="px-2 bg-white text-slate-600">or</span>
+                            </div>
+                        </div>
+
+                        <Button
+                            type="button"
+                            onClick={handleGoogleSignIn}
+                            disabled={isLoadingGoogle}
+                            className="w-full bg-white border border-slate-300 text-slate-900 hover:bg-slate-50"
+                            size="default">
+                            {isLoadingGoogle ? 'Redirecting to Google...' : '🔐 Sign in with Google'}
                         </Button>
                     </div>
                 </div>

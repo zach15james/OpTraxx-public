@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useParams } from 'react-router-dom'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -12,11 +13,20 @@ import {
   AlertCircle,
   Activity,
 } from 'lucide-react'
+import { useAuth } from '@/context/AuthContext'
+import { useTeam } from '@/hooks/useTeam'
 
 export default function Team() {
+  const { teamId } = useParams()
+  const { user } = useAuth()
   const [selectedMember, setSelectedMember] = useState(null)
+  const { teamMembers: firestoreMembers, liveActivity: firestoreLiveActivity, loading } = useTeam({ teamId, uid: user?.uid })
 
-  const teamMembers = [
+  if (loading) {
+    return <div className="flex items-center justify-center h-screen">Loading...</div>
+  }
+
+  const teamMembers = firestoreMembers.length > 0 ? firestoreMembers : [
     {
       id: 1,
       initials: 'AP',
@@ -83,12 +93,8 @@ export default function Team() {
     },
   ]
 
-  const liveActivity = [
-    { time: '2 mins ago', action: 'A. Patel completed', task: 'Server Patch Deployment', icon: '✅' },
-    { time: '5 mins ago', action: 'M. Rivera uploaded files for', task: 'Infrastructure Check', icon: '📤' },
-    { time: '12 mins ago', action: 'J. Kim flagged blocker on', task: 'Form Redesign', icon: '⚠️' },
-    { time: '18 mins ago', action: 'L. Chen clocked out from', task: 'Daily Tasks', icon: '🕐' },
-    { time: '25 mins ago', action: 'A. Patel started task', task: 'Database Migration', icon: '▶️' },
+  const liveActivity = firestoreLiveActivity.length > 0 ? firestoreLiveActivity : [
+    { time: '2 mins ago', action: 'Team member completed', task: 'Task', icon: '✅' },
   ]
 
   const overloadedMembers = teamMembers.filter(m => m.isOverloaded)
