@@ -11,7 +11,7 @@ export function useTaskList({ uid }) {
 
         const tasksQuery = query(
             collection(db, 'tasks'),
-            where('assignedBy', '==', uid),
+            where('assigneeId', '==', uid),
             orderBy('dueDate', 'asc')
         )
 
