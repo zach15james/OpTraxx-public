@@ -40,11 +40,13 @@ export default function MainLayout() {
     role: userProfile?.role === 'supervisor' ? 'Supervisor' : 'Employee',
   }
 
+  const isSupervisor = userProfile?.role === 'supervisor'
+
   // OVERVIEW: Bird's Eye View (Data & Insights)
   const overviewItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboardIcon, path: '/dashboard/1' },
+    ...(isSupervisor ? [{ id: 'dashboard', label: 'Dashboard', icon: LayoutDashboardIcon, path: '/dashboard/1' }] : []),
     { id: 'tasks', label: 'Task List', icon: CheckSquareIcon, path: '/tasks', badge: '12' },
-    { id: 'analytics', label: 'Analytics', icon: BarChart3Icon, path: '/analytics' },
+    ...(isSupervisor ? [{ id: 'analytics', label: 'Analytics', icon: BarChart3Icon, path: '/analytics' }] : []),
   ]
 
   // SUPERVISOR: Actions & Creation
@@ -55,7 +57,7 @@ export default function MainLayout() {
 
   // TEAM: Team Management & Issues
   const teamItems = [
-    { id: 'team', label: 'My Team', icon: UsersIcon, path: '/team/1' },
+    ...(isSupervisor ? [{ id: 'team', label: 'My Team', icon: UsersIcon, path: '/team/1' }] : []),
     { id: 'escalations', label: 'Escalations', icon: AlertTriangle, path: '/escalations', badge: '3' },
   ]
 
@@ -110,32 +112,34 @@ export default function MainLayout() {
           </div>
 
           {/* SUPERVISOR Section - Actions & Creation */}
-          <div className="px-2 mb-6">
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Supervisor</p>
-            <SidebarMenu className="gap-2">
-              {supervisorItems.map((item) => {
-                const Icon = item.icon
-                return (
-                  <SidebarMenuItem key={item.id}>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={isActive(item.path)}
-                      className={`px-3 py-2 rounded-lg flex items-center gap-2 transition-all ${
-                        isActive(item.path)
-                          ? '!bg-blue-600 !text-white'
-                          : '!text-slate-300 hover:!bg-slate-800/50 hover:!text-white'
-                      }`}
-                    >
-                      <Link to={item.path} className="flex items-center w-full gap-2">
-                        <Icon size={18} />
-                        <span className="text-sm">{item.label}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                )
-              })}
-            </SidebarMenu>
-          </div>
+          {isSupervisor && (
+            <div className="px-2 mb-6">
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Supervisor</p>
+              <SidebarMenu className="gap-2">
+                {supervisorItems.map((item) => {
+                  const Icon = item.icon
+                  return (
+                    <SidebarMenuItem key={item.id}>
+                      <SidebarMenuButton
+                        asChild
+                        isActive={isActive(item.path)}
+                        className={`px-3 py-2 rounded-lg flex items-center gap-2 transition-all ${
+                          isActive(item.path)
+                            ? '!bg-blue-600 !text-white'
+                            : '!text-slate-300 hover:!bg-slate-800/50 hover:!text-white'
+                        }`}
+                      >
+                        <Link to={item.path} className="flex items-center w-full gap-2">
+                          <Icon size={18} />
+                          <span className="text-sm">{item.label}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  )
+                })}
+              </SidebarMenu>
+            </div>
+          )}
 
           {/* TEAM Section - Team Management & Issues */}
           <div className="px-2 mb-6">

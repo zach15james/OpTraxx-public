@@ -1,11 +1,10 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Logo } from '@/components/logo'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Link, useNavigate } from 'react-router-dom'
-import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth'
-import { auth } from '@/lib/firebase'
+import { useAuth } from '@/context/AuthContext'
 
 export default function SignUpOne() {
     const [firstName, setFirstName] = useState('')
@@ -13,28 +12,54 @@ export default function SignUpOne() {
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [confirmPassword, setConfirmPassword] = useState('')
+    const [showPassword, setShowPassword] = useState(false)
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false)
     const [error, setError] = useState('')
+    const [isLoading, setIsLoading] = useState(false)
     const navigate = useNavigate()
+    const { signUpWithEmail, user, role, loading } = useAuth()
+
+    useEffect(() => {
+        if (loading === false && user && role) {
+            const redirectUrl = role === 'supervisor' ? '/dashboard/1' : '/tasks'
+            navigate(redirectUrl)
+        }
+    }, [user, role, loading, navigate])
 
     const handleSubmit = async (e) => {
         e.preventDefault()
         setError('')
+
+        if (!firstName.trim() || !lastName.trim()) {
+            setError('Full name is required.')
+            return
+        }
+
         if (password !== confirmPassword) {
             setError('Passwords do not match.')
             return
         }
+
+        if (password.length < 6) {
+            setError('Password must be at least 6 characters.')
+            return
+        }
+
+        setIsLoading(true)
         try {
-            const { user } = await createUserWithEmailAndPassword(auth, email, password)
-            await updateProfile(user, { displayName: `${firstName} ${lastName}` })
-            navigate('/dashboard/1')
+            const fullName = `${firstName} ${lastName}`
+            await signUpWithEmail(email, password, fullName)
         } catch (err) {
             if (err.code === 'auth/email-already-in-use') {
                 setError('An account with this email already exists.')
             } else if (err.code === 'auth/weak-password') {
                 setError('Password must be at least 6 characters.')
+            } else if (err.code === 'auth/invalid-email') {
+                setError('Invalid email address.')
             } else {
-                setError(err.message)
+                setError(err.message || 'Failed to create account.')
             }
+            setIsLoading(false)
         }
     }
 
@@ -95,38 +120,57 @@ export default function SignUpOne() {
 
                         <div className="space-y-2">
                             <Label htmlFor="password" className="block text-sm">Password</Label>
-                            <Input
-                                type="password"
-                                required
-                                name="password"
-                                id="password"
-                                placeholder="Create a password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                className="ring-foreground/15 border-transparent ring-1" />
+                            <div className="relative">
+                                <Input
+                                    type={showPassword ? 'text' : 'password'}
+                                    required
+                                    name="password"
+                                    id="password"
+                                    placeholder="Create a password"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    className="ring-foreground/15 border-transparent ring-1 pr-10" />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                                    aria-label={showPassword ? 'Hide password' : 'Show password'}>
+                                    {showPassword ? '👁️' : '👁️‍🗨️'}
+                                </button>
+                            </div>
                         </div>
 
                         <div className="space-y-2">
                             <Label htmlFor="confirm-password" className="block text-sm">Confirm Password</Label>
-                            <Input
-                                type="password"
-                                required
-                                name="confirm-password"
-                                id="confirm-password"
-                                placeholder="Confirm your password"
-                                value={confirmPassword}
-                                onChange={(e) => setConfirmPassword(e.target.value)}
-                                className="ring-foreground/15 border-transparent ring-1" />
+                            <div className="relative">
+                                <Input
+                                    type={showConfirmPassword ? 'text' : 'password'}
+                                    required
+                                    name="confirm-password"
+                                    id="confirm-password"
+                                    placeholder="Confirm your password"
+                                    value={confirmPassword}
+                                    onChange={(e) => setConfirmPassword(e.target.value)}
+                                    className="ring-foreground/15 border-transparent ring-1 pr-10" />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                                    aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}>
+                                    {showConfirmPassword ? '👁️' : '👁️‍🗨️'}
+                                </button>
+                            </div>
                         </div>
 
                         {error && <p className="text-sm text-red-500">{error}</p>}
 
                         <Button
                             type="submit"
+                            disabled={isLoading}
                             className="w-full text-white"
                             size="default"
                             style={{ backgroundColor: 'var(--color-primary)' }}>
-                            Create Account
+                            {isLoading ? 'Creating account...' : 'Create Account'}
                         </Button>
                     </div>
                 </div>

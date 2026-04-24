@@ -11,6 +11,7 @@ import { useAuth } from '@/context/AuthContext'
 export default function LoginOne() {
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
+    const [showPassword, setShowPassword] = useState(false)
     const [error, setError] = useState('')
     const [isLoadingGoogle, setIsLoadingGoogle] = useState(false)
     const navigate = useNavigate()
@@ -82,16 +83,27 @@ export default function LoginOne() {
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="password" className="block text-sm">Password</Label>
-                            <Input
-                                type="password"
-                                required
-                                name="password"
-                                id="password"
-                                placeholder="Your password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                className="ring-foreground/15 border-transparent ring-1" />
+                            <div className="flex items-center justify-between">
+                                <Label htmlFor="password" className="block text-sm">Password</Label>
+                            </div>
+                            <div className="relative">
+                                <Input
+                                    type={showPassword ? 'text' : 'password'}
+                                    required
+                                    name="password"
+                                    id="password"
+                                    placeholder="Your password"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    className="ring-foreground/15 border-transparent ring-1 pr-10" />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                                    aria-label={showPassword ? 'Hide password' : 'Show password'}>
+                                    {showPassword ? '👁️' : '👁️‍🗨️'}
+                                </button>
+                            </div>
                         </div>
 
                         {error && <p className="text-sm text-red-500">{error}</p>}
@@ -124,7 +136,12 @@ export default function LoginOne() {
                     </div>
                 </div>
 
-                <div className="px-6">
+                <div className="px-6 space-y-3">
+                    <p className="text-muted-foreground text-sm">
+                        <Button asChild variant="link" className="px-0" style={{ color: 'var(--color-primary)' }}>
+                            <Link to="/forgot-password">Forgot password?</Link>
+                        </Button>
+                    </p>
                     <p className="text-muted-foreground text-sm">
                         Don't have an account?
                         <Button asChild variant="link" className="px-2" style={{ color: 'var(--color-primary)' }}>

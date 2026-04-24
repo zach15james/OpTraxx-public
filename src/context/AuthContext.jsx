@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react'
-import { onAuthStateChanged, signInWithPopup, setPersistence, browserLocalPersistence } from 'firebase/auth'
+import { onAuthStateChanged, signInWithPopup, setPersistence, browserLocalPersistence, createUserWithEmailAndPassword } from 'firebase/auth'
 import { auth, db, googleProvider } from '@/lib/firebase'
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore'
 
@@ -83,8 +83,29 @@ export function AuthProvider({ children }) {
         }
     }
 
+    const signUpWithEmail = async (email, password, name) => {
+        try {
+            const result = await createUserWithEmailAndPassword(auth, email, password)
+            const firebaseUser = result.user
+
+            const newUserData = {
+                name: name || firebaseUser.email,
+                email: firebaseUser.email,
+                role: 'employee',
+                teamId: null,
+                createdAt: serverTimestamp(),
+            }
+            await setDoc(doc(db, 'users', firebaseUser.uid), newUserData)
+
+            return firebaseUser
+        } catch (error) {
+            console.error('Error signing up:', error)
+            throw error
+        }
+    }
+
     return (
-        <AuthContext.Provider value={{ user, role, userProfile, loading, signInWithGoogle }}>
+        <AuthContext.Provider value={{ user, role, userProfile, loading, signInWithGoogle, signUpWithEmail }}>
             {children}
         </AuthContext.Provider>
     )

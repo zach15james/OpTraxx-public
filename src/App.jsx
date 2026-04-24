@@ -6,6 +6,7 @@ import PublicLayout from './layouts/PublicLayout'
 import Landing from './pages/Landing'
 import Login from './pages/Login'
 import Signup from './pages/Signup'
+import ForgotPassword from './pages/ForgotPassword'
 import Dashboard from './pages/Dashboard'
 import Team from './pages/Team'
 import Forms from './pages/Forms'
@@ -39,17 +40,24 @@ function App() {
                     {/* Standalone public routes (no header) */}
                     <Route path="/login" element={<Login />} />
                     <Route path="/signup" element={<Signup />} />
+                    <Route path="/forgot-password" element={<ForgotPassword />} />
 
-                    {/* Protected routes */}
+                    {/* Protected routes - authenticated users (all roles) */}
+                    <Route element={<ProtectedRoute />}>
+                        <Route element={<MainLayout />}>
+                            <Route path="/tasks" element={<TaskList />} />
+                            <Route path="/profile" element={<Profile />} />
+                            <Route path="/escalations" element={<Escalations />} />
+                        </Route>
+                    </Route>
+
+                    {/* Supervisor-only protected routes */}
                     <Route element={<ProtectedRoute allowedRoles={['supervisor']} />}>
                         <Route element={<MainLayout />}>
                             <Route path="/dashboard/:teamId" element={<Dashboard />} />
-                            <Route path="/tasks" element={<TaskList />} />
                             <Route path="/analytics" element={<Analytics />} />
                             <Route path="/assign" element={<AssignTask />} />
                             <Route path="/form-builder" element={<FormBuilder />} />
-                            <Route path="/profile" element={<Profile />} />
-                            <Route path="/escalations" element={<Escalations />} />
                             <Route path="/team/:teamId" element={<Team />} />
                             <Route path="/forms" element={<Forms />} />
                         </Route>
