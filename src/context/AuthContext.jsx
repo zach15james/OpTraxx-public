@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { onAuthStateChanged, signInWithPopup, setPersistence, browserLocalPersistence, createUserWithEmailAndPassword } from 'firebase/auth'
 import { auth, db, googleProvider } from '@/lib/firebase'
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore'
+import { doc, getDoc, setDoc, onSnapshot, serverTimestamp } from 'firebase/firestore'
 
 const AuthContext = createContext(null)
 
@@ -15,44 +15,62 @@ export function AuthProvider({ children }) {
 
     useEffect(() => {
         let mounted = true
+        let unsubProfile = null
 
-        const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+        const unsubAuth = onAuthStateChanged(auth, async (firebaseUser) => {
             console.log('Auth state changed:', firebaseUser?.email)
+
+            if (unsubProfile) {
+                unsubProfile()
+                unsubProfile = null
+            }
+
             if (!mounted) return
 
             if (firebaseUser) {
                 setUser(firebaseUser)
                 setLoading(true)
 
-                try {
-                    const userDocRef = doc(db, 'users', firebaseUser.uid)
-                    const userDocSnap = await getDoc(userDocRef)
+                const userDocRef = doc(db, 'users', firebaseUser.uid)
 
-                    if (userDocSnap.exists()) {
-                        const userData = userDocSnap.data()
-                        console.log('User doc found:', userData)
-                        setUserProfile(userData)
-                        setRole(userData.role)
-                    } else {
+                try {
+                    const snap = await getDoc(userDocRef)
+                    if (!snap.exists()) {
                         console.log('User doc not found, creating without role (first-time user)...')
-                        const newUserData = {
+                        await setDoc(userDocRef, {
                             name: firebaseUser.displayName || firebaseUser.email,
                             email: firebaseUser.email,
                             role: null,
                             teamId: null,
                             createdAt: serverTimestamp(),
-                        }
-                        await setDoc(userDocRef, newUserData)
-                        setUserProfile(newUserData)
-                        setRole(null)
+                        })
                     }
-                } catch (error) {
-                    console.error('Error fetching user profile:', error)
-                    setUserProfile(null)
-                    setRole(null)
-                } finally {
-                    setLoading(false)
+                } catch (err) {
+                    console.error('Error ensuring user doc:', err)
                 }
+
+                unsubProfile = onSnapshot(
+                    userDocRef,
+                    (snap) => {
+                        if (!mounted) return
+                        if (snap.exists()) {
+                            const data = snap.data()
+                            console.log('User profile updated:', data)
+                            setUserProfile(data)
+                            setRole(data.role)
+                        } else {
+                            setUserProfile(null)
+                            setRole(null)
+                        }
+                        setLoading(false)
+                    },
+                    (err) => {
+                        console.error('User profile snapshot error:', err)
+                        setUserProfile(null)
+                        setRole(null)
+                        setLoading(false)
+                    }
+                )
             } else {
                 console.log('User signed out')
                 setUser(null)
@@ -64,7 +82,8 @@ export function AuthProvider({ children }) {
 
         return () => {
             mounted = false
-            unsubscribe()
+            if (unsubProfile) unsubProfile()
+            unsubAuth()
         }
     }, [])
 

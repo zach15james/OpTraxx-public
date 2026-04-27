@@ -28,6 +28,7 @@ export function useTaskList({ uid }) {
                         name: assignee?.name || 'Unassigned',
                     },
                     status: data.status === 'in_progress' ? 'In Progress' : data.status === 'done' ? 'Done' : data.status === 'overdue' ? 'Overdue' : 'Pending',
+                    rawStatus: data.status || 'pending',
                     statusColor:
                         data.status === 'in_progress' ? 'bg-blue-100 text-blue-800' :
                         data.status === 'done' ? 'bg-green-100 text-green-800' :
@@ -39,7 +40,8 @@ export function useTaskList({ uid }) {
                         data.priority === 'Medium' ? 'bg-yellow-100 text-yellow-800' :
                         'bg-green-100 text-green-800',
                     dueDate: data.dueDate ? new Date(data.dueDate.toDate()).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'No date',
-                    form: data.formId || 'N/A',
+                    formId: data.formId || null,
+                    form: data.formId ? 'Form attached' : 'N/A',
                 }
             }))
 

@@ -22,6 +22,13 @@ import About from './pages/About'
 import Contact from './pages/Contact'
 import Faq from './pages/Faq'
 import Features from './pages/Features'
+import FormBuilderSandbox from './zach_contributions/FormBuilderSandbox'
+import FormFillSandbox from './zach_contributions/FormFillSandbox'
+import FormSubmissionsSandbox from './zach_contributions/FormSubmissionsSandbox'
+import SupervisorFormsPage from './zach_contributions/SupervisorFormsPage'
+import SupervisorSubmissionsPage from './zach_contributions/SupervisorSubmissionsPage'
+import EmployeeFormsPage from './zach_contributions/EmployeeFormsPage'
+import EmployeeFormFillPage from './zach_contributions/EmployeeFormFillPage'
 
 function App() {
     return (
@@ -44,12 +51,19 @@ function App() {
                     <Route path="/forgot-password" element={<ForgotPassword />} />
                     <Route path="/role-selection" element={<RoleSelectionPage />} />
 
+                    {/* Sandbox form builder — no auth required */}
+                    <Route path="/sandbox/forms" element={<FormBuilderSandbox />} />
+                    <Route path="/sandbox/forms/fill/:formId" element={<FormFillSandbox />} />
+                    <Route path="/sandbox/forms/submissions/:formId" element={<FormSubmissionsSandbox />} />
+
                     {/* Protected routes - authenticated users (all roles) */}
                     <Route element={<ProtectedRoute />}>
                         <Route element={<MainLayout />}>
                             <Route path="/tasks" element={<TaskList />} />
                             <Route path="/profile" element={<Profile />} />
                             <Route path="/escalations" element={<Escalations />} />
+                            <Route path="/my-forms" element={<EmployeeFormsPage />} />
+                            <Route path="/my-forms/:formId" element={<EmployeeFormFillPage />} />
                         </Route>
                     </Route>
 
@@ -62,6 +76,8 @@ function App() {
                             <Route path="/form-builder" element={<FormBuilder />} />
                             <Route path="/team/:teamId" element={<Team />} />
                             <Route path="/forms" element={<Forms />} />
+                            <Route path="/forms-manage" element={<SupervisorFormsPage />} />
+                            <Route path="/forms-manage/submissions/:formId" element={<SupervisorSubmissionsPage />} />
                         </Route>
                     </Route>
                 </Routes>

@@ -7,16 +7,22 @@ service cloud.firestore {
       allow read, write: if request.auth.uid == uid;
     }
 
-    // Tasks: supervisors create/edit/delete; employees read own assigned tasks
+    // Tasks: supervisors create/delete; supervisors update freely; employees
+    // can update their own assigned task (e.g. to mark it complete after
+    // submitting the attached form). Employees read only their own.
     match /tasks/{taskId} {
-      allow create, update, delete: if isSupervisor();
+      allow create, delete: if isSupervisor();
+      allow update: if isSupervisor()
+                    || (request.auth != null && resource.data.assigneeId == request.auth.uid);
       allow read: if isSupervisor()
                   || (request.auth != null && resource.data.assigneeId == request.auth.uid);
     }
 
-    // Forms: supervisors only
+    // Forms: any authenticated user can read (employees need to fill them);
+    // only supervisors can write.
     match /forms/{formId} {
-      allow read, write: if isSupervisor();
+      allow read: if request.auth != null;
+      allow write: if isSupervisor();
     }
 
     // Submissions: employees create their own; supervisors read all

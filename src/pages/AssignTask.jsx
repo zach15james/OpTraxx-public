@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { Search, ChevronRight, Calendar, Bell } from 'lucide-react'
+import { Search, ChevronRight, Calendar, Bell, Plus } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { db } from '@/lib/firebase'
 import { collection, query, where, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore'
+import { subscribeForms } from '@/zach_contributions/formStoreFirestore'
 
 export default function AssignTask() {
   const { user, userProfile } = useAuth()
@@ -13,43 +15,27 @@ export default function AssignTask() {
   const [selectedForm, setSelectedForm] = useState(null)
   const [selectedAssignees, setSelectedAssignees] = useState([])
   const [schedule, setSchedule] = useState('one-time')
-  const [dueDate, setDueDate] = useState('Mar 15, 2026')
+  const today = new Date()
+  const defaultDue = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000)
+  const [dueDate, setDueDate] = useState(
+    defaultDue.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  )
   const [priority, setPriority] = useState('Medium')
   const [teamMembers, setTeamMembers] = useState([])
   const [loading, setLoading] = useState(true)
   const [publishing, setPublishing] = useState(false)
   const [successMessage, setSuccessMessage] = useState('')
+  const [forms, setForms] = useState([])
+  const [formSearch, setFormSearch] = useState('')
 
-  const forms = [
-    {
-      id: 1,
-      name: 'Server Deployment Checklist',
-      fields: 6,
-      lastUsed: 'Mar 4',
-      description: 'Checklist for server deployments',
-    },
-    {
-      id: 2,
-      name: 'Daily Bug Report Form',
-      fields: 7,
-      lastUsed: 'Mar 9',
-      description: 'Daily bug report submission',
-    },
-    {
-      id: 3,
-      name: 'Bug Incident Report',
-      fields: 9,
-      lastUsed: 'Feb 28',
-      description: 'Comprehensive incident reporting',
-    },
-    {
-      id: 4,
-      name: 'Sprint Handover Log',
-      fields: 5,
-      lastUsed: 'Feb 10',
-      description: 'End of sprint handover documentation',
-    },
-  ]
+  // Live subscription to real forms from Firestore
+  useEffect(() => subscribeForms(setForms), [])
+
+  const filteredForms = forms.filter(f =>
+    !formSearch.trim()
+      || f.title?.toLowerCase().includes(formSearch.toLowerCase())
+      || f.description?.toLowerCase().includes(formSearch.toLowerCase())
+  )
 
   const tabs = [
     { id: 'select-form', label: '1 Select Form', number: '1' },
@@ -101,7 +87,7 @@ export default function AssignTask() {
       // Create a task for each selected assignee
       const taskPromises = selectedAssignees.map((assigneeId) =>
         addDoc(collection(db, 'tasks'), {
-          name: selectedForm.name,
+          name: selectedForm.title,
           formId: selectedForm.id,
           assigneeId: assigneeId,
           assignedBy: user.uid,
@@ -109,6 +95,7 @@ export default function AssignTask() {
           priority: priority,
           dueDate: dueDateObj,
           schedule: schedule,
+          isEscalated: false,
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp(),
         })
@@ -116,7 +103,7 @@ export default function AssignTask() {
 
       await Promise.all(taskPromises)
 
-      setSuccessMessage(`✓ Successfully assigned "${selectedForm.name}" to ${selectedAssignees.length} team member${selectedAssignees.length > 1 ? 's' : ''}!`)
+      setSuccessMessage(`✓ Successfully assigned "${selectedForm.title}" to ${selectedAssignees.length} team member${selectedAssignees.length > 1 ? 's' : ''}!`)
 
       // Reset form after 2 seconds
       setTimeout(() => {
@@ -124,7 +111,6 @@ export default function AssignTask() {
         setSelectedForm(null)
         setSelectedAssignees([])
         setSchedule('one-time')
-        setDueDate('Mar 15, 2026')
         setPriority('Medium')
         setSuccessMessage('')
       }, 2000)
@@ -187,42 +173,60 @@ export default function AssignTask() {
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={18} />
                 <input
                   type="text"
-                  placeholder="Search form templates..."
+                  placeholder="Search forms..."
+                  value={formSearch}
+                  onChange={e => setFormSearch(e.target.value)}
                   className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
-              <div className="space-y-3">
-                {forms.map((form) => (
-                  <Card
-                    key={form.id}
-                    onClick={() => {
-                      setSelectedForm(form)
-                      setCurrentStep('assignees')
-                    }}
-                    className={`p-4 border cursor-pointer transition-all hover:shadow-md ${
-                      selectedForm?.id === form.id
-                        ? 'border-blue-500 bg-blue-50'
-                        : 'border-slate-200 hover:border-slate-300'
-                    }`}
-                  >
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <h3 className="font-semibold text-slate-900">{form.name}</h3>
-                        <p className="text-sm text-slate-600 mt-1">{form.description}</p>
-                        <p className="text-xs text-slate-500 mt-2">
-                          {form.fields} fields • Last used {form.lastUsed}
-                        </p>
+              {forms.length === 0 ? (
+                <Card className="p-8 text-center border-dashed border-slate-300">
+                  <p className="text-slate-700 font-medium mb-1">No forms yet</p>
+                  <p className="text-sm text-slate-500 mb-4">
+                    Build a form first, then come back to assign it as a task.
+                  </p>
+                  <Button asChild className="bg-blue-600 hover:bg-blue-700 text-white">
+                    <Link to="/forms-manage"><Plus size={16} className="mr-1" />Create your first form</Link>
+                  </Button>
+                </Card>
+              ) : (
+                <div className="space-y-3">
+                  {filteredForms.map((form) => (
+                    <Card
+                      key={form.id}
+                      onClick={() => {
+                        setSelectedForm(form)
+                        setCurrentStep('assignees')
+                      }}
+                      className={`p-4 border cursor-pointer transition-all hover:shadow-md ${
+                        selectedForm?.id === form.id
+                          ? 'border-blue-500 bg-blue-50'
+                          : 'border-slate-200 hover:border-slate-300'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h3 className="font-semibold text-slate-900">{form.title}</h3>
+                          {form.description && <p className="text-sm text-slate-600 mt-1">{form.description}</p>}
+                          <p className="text-xs text-slate-500 mt-2">
+                            {form.fields?.length || 0} fields
+                            {form.updatedAt ? ` • Updated ${new Date(form.updatedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : ''}
+                          </p>
+                        </div>
+                        {selectedForm?.id === form.id ? (
+                          <div className="text-blue-600 font-semibold">Selected ✓</div>
+                        ) : (
+                          <ChevronRight className="text-slate-400" />
+                        )}
                       </div>
-                      {selectedForm?.id === form.id ? (
-                        <div className="text-blue-600 font-semibold">Selected ✓</div>
-                      ) : (
-                        <ChevronRight className="text-slate-400" />
-                      )}
-                    </div>
-                  </Card>
-                ))}
-              </div>
+                    </Card>
+                  ))}
+                  {filteredForms.length === 0 && (
+                    <p className="text-center text-sm text-slate-500 py-4">No forms match "{formSearch}"</p>
+                  )}
+                </div>
+              )}
             </div>
           )}
 
@@ -409,7 +413,7 @@ export default function AssignTask() {
                 <div>
                   <p className="text-slate-600 font-medium">Form</p>
                   <p className="text-slate-900 font-semibold mt-1">
-                    {selectedForm?.name || 'Not selected'}
+                    {selectedForm?.title || 'Not selected'}
                   </p>
                 </div>
                 <div>

@@ -46,13 +46,16 @@ export default function MainLayout() {
   const overviewItems = [
     ...(isSupervisor ? [{ id: 'dashboard', label: 'Dashboard', icon: LayoutDashboardIcon, path: '/dashboard/1' }] : []),
     { id: 'tasks', label: 'Task List', icon: CheckSquareIcon, path: '/tasks', badge: '12' },
+    ...(!isSupervisor ? [{ id: 'my-forms', label: 'Forms', icon: FileTextIcon, path: '/my-forms' }] : []),
     ...(isSupervisor ? [{ id: 'analytics', label: 'Analytics', icon: BarChart3Icon, path: '/analytics' }] : []),
   ]
 
   // SUPERVISOR: Actions & Creation
   const supervisorItems = [
     { id: 'assign', label: 'Assign Tasks', icon: SendIcon, path: '/assign' },
-    { id: 'form-builder', label: 'Form Builder', icon: SquareIcon, path: '/form-builder' },
+    // Original teammate Form Builder (4-step UI, no save) — superseded by /forms-manage:
+    // { id: 'form-builder', label: 'Form Builder', icon: SquareIcon, path: '/form-builder' },
+    { id: 'forms-manage', label: 'Form Builder', icon: SquareIcon, path: '/forms-manage' },
   ]
 
   // TEAM: Team Management & Issues

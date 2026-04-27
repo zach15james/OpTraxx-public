@@ -30,3 +30,7 @@ CLAUDE.md
 .env
 .env.local
 .env.*.local
+
+
+# zach's notes on the project (his machine)
+zach_notes.md
