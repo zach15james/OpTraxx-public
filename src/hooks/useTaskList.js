@@ -2,16 +2,21 @@ import { useEffect, useState } from 'react'
 import { db } from '@/lib/firebase'
 import { collection, query, where, onSnapshot, orderBy, getDoc, doc } from 'firebase/firestore'
 
-export function useTaskList({ uid }) {
+export function useTaskList({ uid, userRole }) {
     const [tasks, setTasks] = useState([])
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
         if (!uid) return
 
+        // Supervisors see tasks they assigned, employees see tasks assigned to them
+        const whereCondition = userRole === 'supervisor'
+            ? where('assignedBy', '==', uid)
+            : where('assigneeId', '==', uid)
+
         const tasksQuery = query(
             collection(db, 'tasks'),
-            where('assigneeId', '==', uid),
+            whereCondition,
             orderBy('dueDate', 'asc')
         )
 

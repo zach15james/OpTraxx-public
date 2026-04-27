@@ -15,6 +15,7 @@ import Analytics from './pages/Analytics'
 import AssignTask from './pages/AssignTask'
 import Profile from './pages/Profile'
 import Escalations from './pages/Escalations'
+import Settings from './pages/Settings'
 import Pricing from './pages/Pricing'
 import About from './pages/About'
 import Contact from './pages/Contact'
@@ -59,6 +60,7 @@ function App() {
                         <Route element={<MainLayout />}>
                             <Route path="/tasks" element={<TaskList />} />
                             <Route path="/profile" element={<Profile />} />
+                            <Route path="/settings" element={<Settings />} />
                             <Route path="/escalations" element={<Escalations />} />
                             <Route path="/my-forms" element={<EmployeeFormsPage />} />
                             <Route path="/my-forms/:formId" element={<EmployeeFormFillPage />} />

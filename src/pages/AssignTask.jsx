@@ -8,6 +8,7 @@ import { useAuth } from '@/context/AuthContext'
 import { db } from '@/lib/firebase'
 import { collection, query, where, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore'
 import { subscribeForms } from '@/zach_contributions/formStoreFirestore'
+import DatePicker from '@/components/DatePicker'
 
 export default function AssignTask() {
   const { user, userProfile } = useAuth()
@@ -18,7 +19,7 @@ export default function AssignTask() {
   const today = new Date()
   const defaultDue = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000)
   const [dueDate, setDueDate] = useState(
-    defaultDue.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+    defaultDue.toISOString().split('T')[0]
   )
   const [priority, setPriority] = useState('Medium')
   const [teamMembers, setTeamMembers] = useState([])
@@ -102,8 +103,9 @@ export default function AssignTask() {
     setSuccessMessage('')
 
     try {
-      // Parse due date (simple parsing for "Mar 15, 2026" format)
-      const dueDateObj = new Date(dueDate)
+      // Parse due date (ISO format: YYYY-MM-DD) in local timezone
+      const [year, month, day] = dueDate.split('-')
+      const dueDateObj = new Date(parseInt(year), parseInt(month) - 1, parseInt(day))
 
       // Create a task for each selected assignee
       const taskPromises = selectedAssignees.map((assigneeId) =>
@@ -337,14 +339,9 @@ export default function AssignTask() {
 
               <div>
                 <h3 className="font-semibold text-slate-900 mb-4">Due Date</h3>
-                <div className="flex gap-2">
-                  <Calendar size={20} className="text-slate-400" />
-                  <input
-                    type="text"
-                    value={dueDate}
-                    onChange={(e) => setDueDate(e.target.value)}
-                    className="flex-1 px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
+                <div className="flex gap-2 items-start">
+                  <Calendar size={20} className="text-slate-400 mt-2 flex-shrink-0" />
+                  <DatePicker value={dueDate} onChange={setDueDate} />
                 </div>
               </div>
 
@@ -463,7 +460,13 @@ export default function AssignTask() {
                 </div>
                 <div>
                   <p className="text-slate-600 font-medium">Due</p>
-                  <p className="text-slate-900 font-semibold mt-1">{dueDate}</p>
+                  <p className="text-slate-900 font-semibold mt-1">
+                    {dueDate ? (() => {
+                      const [year, month, day] = dueDate.split('-')
+                      const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day))
+                      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                    })() : 'Not set'}
+                  </p>
                 </div>
                 <div>
                   <p className="text-slate-600 font-medium">Recurrence</p>
