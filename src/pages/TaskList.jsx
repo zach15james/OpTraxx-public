@@ -17,7 +17,7 @@ export default function TaskList() {
   const [selectedIds, setSelectedIds] = useState([])
   const [deleting, setDeleting] = useState(false)
   const { user, userProfile } = useAuth()
-  const { tasks, loading } = useTaskList({ uid: user?.uid })
+  const { tasks, loading } = useTaskList({ uid: user?.uid, userRole: userProfile?.role })
 
   if (loading) {
     return <div className="flex items-center justify-center h-screen">Loading...</div>
