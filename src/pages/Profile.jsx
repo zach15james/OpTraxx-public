@@ -1,12 +1,16 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { useAuth } from '@/context/AuthContext'
+import { db } from '@/lib/firebase'
+import { doc, updateDoc, collection, query, where, onSnapshot } from 'firebase/firestore'
 
 export default function Profile() {
   const { user: firebaseUser, userProfile } = useAuth()
   const [isEditing, setIsEditing] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [saveStatus, setSaveStatus] = useState('')
   const [notifications, setNotifications] = useState({
     taskAssigned: true,
     overdueAlerts: true,
@@ -17,9 +21,48 @@ export default function Profile() {
   const [formData, setFormData] = useState({
     fullName: userProfile?.name || 'User',
     email: firebaseUser?.email || '',
-    department: 'Engineering Operations',
+    department: userProfile?.department || 'Engineering Operations',
     role: userProfile?.role === 'supervisor' ? 'Supervisor' : 'Employee',
   })
+
+  const [tasksCompleted, setTasksCompleted] = useState(0)
+  const [teamMembers, setTeamMembers] = useState(0)
+
+  // Sync formData + notifications when userProfile arrives/changes
+  useEffect(() => {
+    if (!userProfile) return
+    setFormData(prev => ({
+      ...prev,
+      fullName: userProfile.name || prev.fullName,
+      department: userProfile.department || prev.department,
+      role: userProfile.role === 'supervisor' ? 'Supervisor' : 'Employee',
+    }))
+    if (userProfile.notifications) {
+      setNotifications(prev => ({ ...prev, ...userProfile.notifications }))
+    }
+  }, [userProfile])
+
+  // Live count: tasks completed by/for this user
+  useEffect(() => {
+    if (!firebaseUser?.uid || !userProfile?.role) return
+    const field = userProfile.role === 'supervisor' ? 'assignedBy' : 'assigneeId'
+    const q = query(
+      collection(db, 'tasks'),
+      where(field, '==', firebaseUser.uid),
+      where('status', '==', 'done')
+    )
+    return onSnapshot(q, (snap) => setTasksCompleted(snap.size))
+  }, [firebaseUser?.uid, userProfile?.role])
+
+  // Live count: team members
+  useEffect(() => {
+    if (!userProfile?.teamId) {
+      setTeamMembers(0)
+      return
+    }
+    const q = query(collection(db, 'users'), where('teamId', '==', userProfile.teamId))
+    return onSnapshot(q, (snap) => setTeamMembers(snap.size))
+  }, [userProfile?.teamId])
 
   const getFormattedDate = (timestamp) => {
     if (!timestamp) return 'Recently'
@@ -33,8 +76,8 @@ export default function Profile() {
     role: formData.role,
     email: formData.email,
     department: formData.department,
-    tasksCompleted: 47,
-    teamMembers: 4,
+    tasksCompleted,
+    teamMembers,
     since: getFormattedDate(userProfile?.createdAt),
   }
 
@@ -45,11 +88,45 @@ export default function Profile() {
     }))
   }
 
-  const handleNotificationToggle = (key) => {
-    setNotifications(prev => ({
-      ...prev,
-      [key]: !prev[key]
-    }))
+  const handleSave = async () => {
+    if (!firebaseUser?.uid) return
+    setSaving(true)
+    setSaveStatus('')
+    try {
+      const role = formData.role === 'Supervisor' ? 'supervisor' : 'employee'
+      await updateDoc(doc(db, 'users', firebaseUser.uid), {
+        name: formData.fullName,
+        department: formData.department,
+        role,
+      })
+      setIsEditing(false)
+      setSaveStatus('Saved ✓')
+      setTimeout(() => setSaveStatus(''), 2000)
+    } catch (err) {
+      setSaveStatus('Failed: ' + (err.message || err))
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleEditClick = () => {
+    if (isEditing) {
+      handleSave()
+    } else {
+      setIsEditing(true)
+    }
+  }
+
+  const handleNotificationToggle = async (key) => {
+    const next = { ...notifications, [key]: !notifications[key] }
+    setNotifications(next)
+    if (!firebaseUser?.uid) return
+    try {
+      await updateDoc(doc(db, 'users', firebaseUser.uid), { notifications: next })
+    } catch (err) {
+      setNotifications(notifications)
+      setSaveStatus('Failed to save preference: ' + (err.message || err))
+    }
   }
 
   return (
@@ -62,12 +139,16 @@ export default function Profile() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-slate-900">My Profile</h1>
-        <Button
-          onClick={() => setIsEditing(!isEditing)}
-          className="bg-blue-600 hover:bg-blue-700 text-white"
-        >
-          {isEditing ? 'Save Changes' : 'Edit Profile'}
-        </Button>
+        <div className="flex items-center gap-3">
+          {saveStatus && <span className="text-sm text-slate-600">{saveStatus}</span>}
+          <Button
+            onClick={handleEditClick}
+            disabled={saving}
+            className="bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50"
+          >
+            {saving ? 'Saving…' : isEditing ? 'Save Changes' : 'Edit Profile'}
+          </Button>
+        </div>
       </div>
 
       <p className="text-slate-600">Manage your account settings and preferences</p>

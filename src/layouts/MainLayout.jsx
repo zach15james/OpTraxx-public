@@ -1,7 +1,8 @@
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { signOut } from 'firebase/auth'
-import { auth } from '@/lib/firebase'
+import { auth, db } from '@/lib/firebase'
+import { collection, query, where, onSnapshot } from 'firebase/firestore'
 import { useAuth } from '@/context/AuthContext'
 import {
   SidebarProvider,
@@ -42,10 +43,28 @@ export default function MainLayout() {
 
   const isSupervisor = userProfile?.role === 'supervisor'
 
+  // Live counts for sidebar badges
+  const [openTaskCount, setOpenTaskCount] = useState(0)
+  const [escalationCount, setEscalationCount] = useState(0)
+
+  useEffect(() => {
+    if (!firebaseUser?.uid) return
+    const field = isSupervisor ? 'assignedBy' : 'assigneeId'
+    const tasksQ = query(collection(db, 'tasks'), where(field, '==', firebaseUser.uid))
+    return onSnapshot(tasksQ, (snap) => {
+      const docs = snap.docs.map(d => d.data())
+      setOpenTaskCount(docs.filter(d => d.status !== 'done').length)
+      setEscalationCount(docs.filter(d => d.isEscalated === true && d.status !== 'done').length)
+    })
+  }, [firebaseUser?.uid, isSupervisor])
+
+  const taskBadge = openTaskCount > 0 ? String(openTaskCount) : null
+  const escalationBadge = escalationCount > 0 ? String(escalationCount) : null
+
   // OVERVIEW: Bird's Eye View (Data & Insights)
   const overviewItems = [
     ...(isSupervisor ? [{ id: 'dashboard', label: 'Dashboard', icon: LayoutDashboardIcon, path: '/dashboard/1' }] : []),
-    { id: 'tasks', label: 'Task List', icon: CheckSquareIcon, path: '/tasks', badge: '12' },
+    { id: 'tasks', label: 'Task List', icon: CheckSquareIcon, path: '/tasks', badge: taskBadge },
     ...(!isSupervisor ? [{ id: 'my-forms', label: 'Forms', icon: FileTextIcon, path: '/my-forms' }] : []),
     ...(isSupervisor ? [{ id: 'analytics', label: 'Analytics', icon: BarChart3Icon, path: '/analytics' }] : []),
   ]
@@ -61,10 +80,14 @@ export default function MainLayout() {
   // TEAM: Team Management & Issues
   const teamItems = [
     ...(isSupervisor ? [{ id: 'team', label: 'My Team', icon: UsersIcon, path: '/team/1' }] : []),
-    { id: 'escalations', label: 'Escalations', icon: AlertTriangle, path: '/escalations', badge: '3' },
+    { id: 'escalations', label: 'Escalations', icon: AlertTriangle, path: '/escalations', badge: escalationBadge },
   ]
 
-  const isActive = (path) => location.pathname === path || location.pathname.startsWith(path.split('/')[1])
+  const isActive = (path) => {
+    const target = path.split('/')[1]
+    const current = location.pathname.split('/')[1]
+    return target === current
+  }
 
   return (
     <SidebarProvider
@@ -221,7 +244,7 @@ export default function MainLayout() {
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => navigate('/profile')}>Profile</DropdownMenuItem>
-              <DropdownMenuItem>Settings</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate('/profile')}>Settings</DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={async () => { await signOut(auth); navigate('/login') }}>Log out</DropdownMenuItem>
             </DropdownMenuContent>

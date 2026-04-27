@@ -44,7 +44,7 @@ export default function Dashboard() {
             Good morning, {(userProfile?.name || 'User').split(' ')[0]} 👋
           </h1>
           <p className="text-slate-600 mt-1">
-            {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })} • Supervisor • <span className="font-medium">{activeTasks.length} open tasks</span>
+            {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })} • {userProfile?.role === 'supervisor' ? 'Supervisor' : 'Employee'} • <span className="font-medium">{activeTasks.length} open tasks</span>
           </p>
         </div>
         <Link to="/assign">

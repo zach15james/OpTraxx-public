@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -14,76 +15,130 @@ import {
 } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { useEscalations } from '@/hooks/useEscalations'
+import { db } from '@/lib/firebase'
+import {
+  doc,
+  updateDoc,
+  arrayUnion,
+  collection,
+  query,
+  where,
+  onSnapshot,
+  addDoc,
+  serverTimestamp,
+} from 'firebase/firestore'
 
 export default function Escalations() {
-  const { user } = useAuth()
-  const { escalations: firestoreEscalations, loading } = useEscalations({ uid: user?.uid })
+  const { user, userProfile } = useAuth()
+  const navigate = useNavigate()
+  const { escalations, loading } = useEscalations({ uid: user?.uid })
   const [selectedEscalation, setSelectedEscalation] = useState(null)
+  const [teamMembers, setTeamMembers] = useState([])
+  const [showReassignFor, setShowReassignFor] = useState(null)
+  const [noteText, setNoteText] = useState('')
+  const [actionStatus, setActionStatus] = useState('')
+  const [pending, setPending] = useState(false)
+
+  // Pull team for reassign picker
+  useEffect(() => {
+    if (!userProfile?.teamId) return
+    const q = query(
+      collection(db, 'users'),
+      where('teamId', '==', userProfile.teamId),
+      where('role', '==', 'employee')
+    )
+    return onSnapshot(q, (snap) => {
+      setTeamMembers(snap.docs.map(d => ({ id: d.id, ...d.data() })))
+    })
+  }, [userProfile?.teamId])
 
   if (loading) {
     return <div className="flex items-center justify-center h-screen">Loading...</div>
   }
 
-  const escalations = firestoreEscalations.length > 0 ? firestoreEscalations : [
-    {
-      id: 1,
-      title: 'Server Patch Deployment — Critical',
-      assignee: { initials: 'AP', name: 'A. Patel', role: 'Senior Engineer' },
-      blockerReason: 'Missing Approval',
-      blockerType: 'approval',
-      heat: 24, // hours stuck
-      daysOverdue: 3,
-      priority: 'Critical',
-      escalatedAt: '2 days ago',
-      form: 'Server Deployment Checklist',
-      lastUpdate: '6 hours ago',
-      timeline: [
-        { time: 'Mar 10, 2:30 PM', action: 'Task marked overdue', user: 'System' },
-        { time: 'Mar 10, 3:15 PM', action: 'A. Patel flagged blocker: Missing Approval', user: 'A. Patel' },
-        { time: 'Mar 10, 4:00 PM', action: 'Escalated to supervisor', user: 'System' },
-        { time: 'Mar 11, 9:00 AM', action: 'Nudge notification sent', user: 'System' },
-      ],
-      completionRate: 65,
-    },
-    {
-      id: 2,
-      title: 'Database Migration v2.1',
-      assignee: { initials: 'LC', name: 'L. Chen', role: 'QA Engineer' },
-      blockerReason: 'Understaffed',
-      blockerType: 'resources',
-      heat: 18,
-      daysOverdue: 2,
-      priority: 'High',
-      escalatedAt: '1 day ago',
-      form: 'Infrastructure Change Request',
-      lastUpdate: '12 hours ago',
-      timeline: [
-        { time: 'Mar 9, 5:00 PM', action: 'Task due date reached', user: 'System' },
-        { time: 'Mar 9, 5:30 PM', action: 'L. Chen flagged blocker: Understaffed', user: 'L. Chen' },
-        { time: 'Mar 10, 9:00 AM', action: 'Escalated to supervisor', user: 'System' },
-      ],
-      completionRate: 40,
-    },
-    {
-      id: 3,
-      title: 'Code Review — Payment Module',
-      assignee: { initials: 'JK', name: 'J. Kim', role: 'Frontend Engineer' },
-      blockerReason: 'Waiting on Dependency',
-      blockerType: 'dependency',
-      heat: 12,
-      daysOverdue: 1,
-      priority: 'High',
-      escalatedAt: '18 hours ago',
-      form: 'Code Review Request',
-      lastUpdate: '4 hours ago',
-      timeline: [
-        { time: 'Mar 10, 10:00 AM', action: 'Task due date reached', user: 'System' },
-        { time: 'Mar 10, 10:45 AM', action: 'J. Kim flagged blocker: Waiting on Dependency', user: 'J. Kim' },
-        { time: 'Mar 10, 2:00 PM', action: 'Escalated to supervisor', user: 'System' },
-      ],
-      completionRate: 75,
-    },
-  ]
+  const showStatus = (msg) => {
+    setActionStatus(msg)
+    setTimeout(() => setActionStatus(''), 3000)
+  }
+
+  const handleReassign = async (taskId, newAssigneeId) => {
+    if (!newAssigneeId) return
+    setPending(true)
+    try {
+      await updateDoc(doc(db, 'tasks', taskId), {
+        assigneeId: newAssigneeId,
+        isEscalated: false,
+        updatedAt: serverTimestamp(),
+      })
+      showStatus('Task reassigned.')
+      setShowReassignFor(null)
+    } catch (err) {
+      showStatus('Failed to reassign: ' + (err.message || err))
+    } finally {
+      setPending(false)
+    }
+  }
+
+  const handleOverride = async (taskId) => {
+    setPending(true)
+    try {
+      await updateDoc(doc(db, 'tasks', taskId), {
+        status: 'done',
+        isEscalated: false,
+        completedAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      })
+      showStatus('Task marked complete.')
+    } catch (err) {
+      showStatus('Failed to override: ' + (err.message || err))
+    } finally {
+      setPending(false)
+    }
+  }
+
+  const handleNudge = async (esc) => {
+    if (!esc.assigneeId || !user?.uid) return
+    setPending(true)
+    try {
+      await addDoc(collection(db, 'nudges'), {
+        toUid: esc.assigneeId,
+        toName: esc.assignee.name,
+        fromUid: user.uid,
+        taskId: esc.id,
+        message: `High-priority nudge on "${esc.title}".`,
+        createdAt: serverTimestamp(),
+        read: false,
+      })
+      showStatus(`Nudge sent to ${esc.assignee.name}.`)
+    } catch (err) {
+      showStatus('Failed to nudge: ' + (err.message || err))
+    } finally {
+      setPending(false)
+    }
+  }
+
+  const handleAddNote = async (taskId) => {
+    const text = noteText.trim()
+    if (!text || !user?.uid) return
+    setPending(true)
+    try {
+      await updateDoc(doc(db, 'tasks', taskId), {
+        notes: arrayUnion({
+          text,
+          byUid: user.uid,
+          byName: userProfile?.name || user.email || 'Supervisor',
+          at: new Date(),
+        }),
+        updatedAt: serverTimestamp(),
+      })
+      setNoteText('')
+      showStatus('Note added.')
+    } catch (err) {
+      showStatus('Failed to add note: ' + (err.message || err))
+    } finally {
+      setPending(false)
+    }
+  }
 
   const hasEscalations = escalations.length > 0
 
@@ -96,7 +151,7 @@ export default function Escalations() {
           <p className="text-xl text-slate-600 max-w-md">
             Your team is running smoothly. No escalated tasks to worry about.
           </p>
-          <Button className="bg-blue-600 hover:bg-blue-700 text-white mt-8">
+          <Button onClick={() => navigate('/tasks')} className="bg-blue-600 hover:bg-blue-700 text-white mt-8">
             View All Tasks
           </Button>
         </div>
@@ -271,20 +326,60 @@ export default function Escalations() {
             {/* Quick Actions */}
             <Card className="p-6 border-slate-200">
               <h3 className="font-bold text-slate-900 mb-4">Quick Actions</h3>
+              {actionStatus && (
+                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded text-sm text-blue-800">
+                  {actionStatus}
+                </div>
+              )}
               <div className="grid grid-cols-3 gap-3">
-                <Button className="bg-blue-100 text-blue-700 hover:bg-blue-200 font-semibold h-12">
+                <Button
+                  onClick={() => setShowReassignFor(showReassignFor === selected.id ? null : selected.id)}
+                  disabled={pending}
+                  className="bg-blue-100 text-blue-700 hover:bg-blue-200 font-semibold h-12"
+                >
                   <Share2 className="w-4 h-4 mr-2" />
                   Reassign
                 </Button>
-                <Button className="bg-yellow-100 text-yellow-700 hover:bg-yellow-200 font-semibold h-12">
+                <Button
+                  onClick={() => handleNudge(selected)}
+                  disabled={pending}
+                  className="bg-yellow-100 text-yellow-700 hover:bg-yellow-200 font-semibold h-12"
+                >
                   <MessageSquare className="w-4 h-4 mr-2" />
                   Nudge
                 </Button>
-                <Button className="bg-emerald-100 text-emerald-700 hover:bg-emerald-200 font-semibold h-12">
+                <Button
+                  onClick={() => handleOverride(selected.id)}
+                  disabled={pending}
+                  className="bg-emerald-100 text-emerald-700 hover:bg-emerald-200 font-semibold h-12"
+                >
                   <CheckCircle2 className="w-4 h-4 mr-2" />
                   Override
                 </Button>
               </div>
+              {showReassignFor === selected.id && (
+                <div className="mt-4 p-4 border border-blue-200 rounded-lg bg-blue-50">
+                  <p className="text-sm font-medium text-slate-700 mb-2">Reassign to:</p>
+                  {teamMembers.length === 0 ? (
+                    <p className="text-sm text-slate-500">No other team members available.</p>
+                  ) : (
+                    <div className="flex flex-wrap gap-2">
+                      {teamMembers
+                        .filter(m => m.id !== selected.assigneeId)
+                        .map(m => (
+                          <Button
+                            key={m.id}
+                            onClick={() => handleReassign(selected.id, m.id)}
+                            disabled={pending}
+                            className="bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 text-xs"
+                          >
+                            {m.name || m.email}
+                          </Button>
+                        ))}
+                    </div>
+                  )}
+                </div>
+              )}
               <p className="text-xs text-slate-600 mt-4">
                 💡 <strong>Tip:</strong> Use Nudge to send a high-priority notification, Reassign to move to another team member, or Override if you've handled it manually.
               </p>
@@ -317,16 +412,25 @@ export default function Escalations() {
             {/* Comments Section */}
             <Card className="p-6 border-slate-200">
               <h3 className="font-bold text-slate-900 mb-4">Add Note</h3>
-              <div className="flex gap-3">
+              <form
+                onSubmit={(e) => { e.preventDefault(); handleAddNote(selected.id) }}
+                className="flex gap-3"
+              >
                 <input
                   type="text"
+                  value={noteText}
+                  onChange={(e) => setNoteText(e.target.value)}
                   placeholder="Add a note for the team..."
                   className="flex-1 px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
-                <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+                <Button
+                  type="submit"
+                  disabled={pending || !noteText.trim()}
+                  className="bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50"
+                >
                   <Send className="w-4 h-4" />
                 </Button>
-              </div>
+              </form>
             </Card>
           </div>
         )}

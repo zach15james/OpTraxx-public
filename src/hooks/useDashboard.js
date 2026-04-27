@@ -45,29 +45,37 @@ export function useDashboard({ uid, teamId }) {
         return unsubscribe
     }, [uid, teamId])
 
+    const startOfToday = new Date()
+    startOfToday.setHours(0, 0, 0, 0)
+    const addedToday = tasks.filter(t => {
+        const created = t.createdAt?.toDate?.() || (t.createdAt instanceof Date ? t.createdAt : null)
+        return created && created >= startOfToday
+    }).length
+    const overdueCount = tasks.filter(t => t.status === 'overdue').length
+
     const stats = [
         {
             label: 'Open Tasks',
             value: tasks.filter(t => ['pending', 'in_progress'].includes(t.status)).length.toString(),
-            change: '+3 added today',
+            change: addedToday > 0 ? `+${addedToday} added today` : 'No new today',
             changeType: 'neutral',
         },
         {
             label: 'Completed',
             value: tasks.filter(t => t.status === 'done').length.toString(),
-            change: 'This week',
+            change: 'All time',
             changeType: 'positive',
         },
         {
             label: 'Overdue',
-            value: tasks.filter(t => t.status === 'overdue').length.toString(),
-            change: 'Needs attention',
-            changeType: 'negative',
+            value: overdueCount.toString(),
+            change: overdueCount > 0 ? 'Needs attention' : 'On track',
+            changeType: overdueCount > 0 ? 'negative' : 'positive',
         },
         {
             label: 'Completion Rate',
             value: tasks.length > 0 ? Math.round((tasks.filter(t => t.status === 'done').length / tasks.length) * 100) + '%' : '0%',
-            change: '+3% vs last week',
+            change: `${tasks.filter(t => t.status === 'done').length} of ${tasks.length}`,
             changeType: 'positive',
         },
     ]

@@ -47,7 +47,7 @@ export function useTeam({ teamId, uid }) {
                     status: 'On-Site',
                     statusColor: 'bg-green-100 text-green-800',
                     statusIcon: '📍',
-                    workload: Math.min(workload + Math.random() * 20, 100),
+                    workload,
                     tasksCompleted: completedTasks,
                     tasksPending: openTasks,
                     trendData: [45, 52, 58, 65, 72, 78, 85],

@@ -3,13 +3,19 @@ import { Link } from 'react-router-dom'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { ChevronDown, Search } from 'lucide-react'
+import { Search, Trash2 } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { useTaskList } from '@/hooks/useTaskList'
 import JoinTeamCard from '@/components/JoinTeamCard'
+import { db } from '@/lib/firebase'
+import { doc, deleteDoc } from 'firebase/firestore'
 
 export default function TaskList() {
   const [sortBy, setSortBy] = useState('due-date')
+  const [statusFilter, setStatusFilter] = useState('all')
+  const [searchTerm, setSearchTerm] = useState('')
+  const [selectedIds, setSelectedIds] = useState([])
+  const [deleting, setDeleting] = useState(false)
   const { user, userProfile } = useAuth()
   const { tasks, loading } = useTaskList({ uid: user?.uid })
 
@@ -17,13 +23,47 @@ export default function TaskList() {
     return <div className="flex items-center justify-center h-screen">Loading...</div>
   }
 
-  const statusOptions = [
-    { label: 'All Status', value: 'all' },
-    { label: 'In Progress', value: 'in-progress' },
-    { label: 'Done', value: 'done' },
-    { label: 'Pending', value: 'pending' },
-    { label: 'Overdue', value: 'overdue' },
-  ]
+  const isSupervisor = userProfile?.role === 'supervisor'
+
+  const priorityOrder = { High: 0, Medium: 1, Low: 2 }
+  const filteredTasks = tasks
+    .filter(t => statusFilter === 'all'
+      || (statusFilter === 'in-progress' && t.rawStatus === 'in_progress')
+      || t.rawStatus === statusFilter)
+    .filter(t => !searchTerm.trim()
+      || t.name.toLowerCase().includes(searchTerm.toLowerCase()))
+    .slice()
+    .sort((a, b) => {
+      if (sortBy === 'priority') return (priorityOrder[a.priority] ?? 99) - (priorityOrder[b.priority] ?? 99)
+      if (sortBy === 'name') return a.name.localeCompare(b.name)
+      if (sortBy === 'status') return a.rawStatus.localeCompare(b.rawStatus)
+      return 0
+    })
+
+  const allFilteredSelected = filteredTasks.length > 0 && filteredTasks.every(t => selectedIds.includes(t.id))
+
+  const toggleOne = (id) => {
+    setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])
+  }
+
+  const toggleAll = () => {
+    if (allFilteredSelected) setSelectedIds([])
+    else setSelectedIds(filteredTasks.map(t => t.id))
+  }
+
+  const deleteSelected = async () => {
+    if (!isSupervisor || selectedIds.length === 0) return
+    if (!confirm(`Delete ${selectedIds.length} task${selectedIds.length === 1 ? '' : 's'}?`)) return
+    setDeleting(true)
+    try {
+      await Promise.all(selectedIds.map(id => deleteDoc(doc(db, 'tasks', id))))
+      setSelectedIds([])
+    } catch (err) {
+      alert('Failed to delete: ' + (err.message || err))
+    } finally {
+      setDeleting(false)
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -63,28 +103,66 @@ export default function TaskList() {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={18} />
             <input
               type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search tasks..."
               className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
           {/* Status Filter */}
-          <div className="relative">
-            <button className="flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-300 hover:bg-slate-50 text-slate-700 text-sm font-medium">
-              All Status
-              <ChevronDown size={16} />
-            </button>
-          </div>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="px-3 py-2 rounded-lg border border-slate-300 hover:bg-slate-50 text-slate-700 text-sm font-medium bg-white cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="all">All Status</option>
+            <option value="pending">Pending</option>
+            <option value="in-progress">In Progress</option>
+            <option value="done">Done</option>
+            <option value="overdue">Overdue</option>
+          </select>
 
           {/* Sort */}
-          <div className="relative">
-            <button className="flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-300 hover:bg-slate-50 text-slate-700 text-sm font-medium">
-              Sort Due Date
-              <ChevronDown size={16} />
-            </button>
-          </div>
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            className="px-3 py-2 rounded-lg border border-slate-300 hover:bg-slate-50 text-slate-700 text-sm font-medium bg-white cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="due-date">Sort by Due Date</option>
+            <option value="priority">Sort by Priority</option>
+            <option value="name">Sort by Name</option>
+            <option value="status">Sort by Status</option>
+          </select>
         </div>
       </Card>
+
+      {/* Bulk action bar (supervisor only, when selection exists) */}
+      {isSupervisor && selectedIds.length > 0 && (
+        <Card className="p-3 border-blue-200 bg-blue-50 flex items-center justify-between">
+          <p className="text-sm text-blue-800 font-medium">
+            {selectedIds.length} task{selectedIds.length === 1 ? '' : 's'} selected
+          </p>
+          <div className="flex gap-2">
+            <Button
+              onClick={() => setSelectedIds([])}
+              variant="outline"
+              size="sm"
+            >
+              Clear
+            </Button>
+            <Button
+              onClick={deleteSelected}
+              disabled={deleting}
+              size="sm"
+              className="bg-red-600 hover:bg-red-700 text-white disabled:opacity-50"
+            >
+              <Trash2 size={14} className="mr-1" />
+              {deleting ? 'Deleting…' : 'Delete'}
+            </Button>
+          </div>
+        </Card>
+      )}
 
       {/* Tasks Table */}
       <Card className="border-slate-200 overflow-hidden">
@@ -93,7 +171,14 @@ export default function TaskList() {
             <thead>
               <tr className="border-b border-slate-200 bg-slate-50">
                 <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase">
-                  <input type="checkbox" className="rounded" />
+                  {isSupervisor ? (
+                    <input
+                      type="checkbox"
+                      checked={allFilteredSelected}
+                      onChange={toggleAll}
+                      className="rounded cursor-pointer"
+                    />
+                  ) : null}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase">
                   Task Name
@@ -119,12 +204,19 @@ export default function TaskList() {
               </tr>
             </thead>
             <tbody>
-              {tasks.map((task) => {
+              {filteredTasks.map((task) => {
                 const canComplete = task.formId && task.rawStatus !== 'done'
                 return (
                   <tr key={task.id} className="border-b border-slate-200 hover:bg-slate-50 transition-colors">
                     <td className="px-6 py-4">
-                      <input type="checkbox" className="rounded" />
+                      {isSupervisor ? (
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.includes(task.id)}
+                          onChange={() => toggleOne(task.id)}
+                          className="rounded cursor-pointer"
+                        />
+                      ) : null}
                     </td>
                     <td className="px-6 py-4 text-sm font-medium text-slate-900">
                       {task.name}

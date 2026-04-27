@@ -27,9 +27,30 @@ export default function AssignTask() {
   const [successMessage, setSuccessMessage] = useState('')
   const [forms, setForms] = useState([])
   const [formSearch, setFormSearch] = useState('')
+  const [notifSettings, setNotifSettings] = useState({
+    assignmentNotification: true,
+    dueDateReminder: true,
+    overdueAlert: true,
+  })
+  const [recentTasks, setRecentTasks] = useState([])
 
   // Live subscription to real forms from Firestore
   useEffect(() => subscribeForms(setForms), [])
+
+  // Live recent tasks assigned by this supervisor
+  useEffect(() => {
+    if (!user?.uid) return
+    const recentQ = query(collection(db, 'tasks'), where('assignedBy', '==', user.uid))
+    return onSnapshot(recentQ, (snap) => {
+      const docs = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+      docs.sort((a, b) => {
+        const aMs = a.createdAt?.toMillis?.() || 0
+        const bMs = b.createdAt?.toMillis?.() || 0
+        return bMs - aMs
+      })
+      setRecentTasks(docs.slice(0, 3))
+    })
+  }, [user?.uid])
 
   const filteredForms = forms.filter(f =>
     !formSearch.trim()
@@ -96,6 +117,7 @@ export default function AssignTask() {
           dueDate: dueDateObj,
           schedule: schedule,
           isEscalated: false,
+          notifications: notifSettings,
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp(),
         })
@@ -363,19 +385,22 @@ export default function AssignTask() {
               <div className="space-y-4">
                 {[
                   {
+                    key: 'assignmentNotification',
                     title: 'Assignment Notification',
                     description: 'Send notification when task is assigned',
                   },
                   {
+                    key: 'dueDateReminder',
                     title: 'Due Date Reminder',
                     description: 'Remind team members 24 hours before due date',
                   },
                   {
+                    key: 'overdueAlert',
                     title: 'Overdue Alert',
                     description: 'Alert when task is overdue',
                   },
-                ].map((notification, idx) => (
-                  <Card key={idx} className="p-4 border-slate-200">
+                ].map((notification) => (
+                  <Card key={notification.key} className="p-4 border-slate-200">
                     <div className="flex items-center justify-between">
                       <div>
                         <h4 className="font-semibold text-slate-900">
@@ -385,7 +410,15 @@ export default function AssignTask() {
                           {notification.description}
                         </p>
                       </div>
-                      <input type="checkbox" defaultChecked className="rounded" />
+                      <input
+                        type="checkbox"
+                        checked={notifSettings[notification.key]}
+                        onChange={(e) => setNotifSettings(prev => ({
+                          ...prev,
+                          [notification.key]: e.target.checked,
+                        }))}
+                        className="rounded cursor-pointer"
+                      />
                     </div>
                   </Card>
                 ))}
@@ -441,20 +474,25 @@ export default function AssignTask() {
 
             <div className="border-t border-slate-200 pt-6">
               <h3 className="font-bold text-slate-900 mb-4">Recently Assigned</h3>
-              <div className="space-y-3 text-sm">
-                <div className="text-slate-600">
-                  <p className="font-medium">Daily Standup Report</p>
-                  <p className="text-xs text-slate-500 mt-1">All team • Due today</p>
+              {recentTasks.length === 0 ? (
+                <p className="text-xs text-slate-500">Nothing assigned yet.</p>
+              ) : (
+                <div className="space-y-3 text-sm">
+                  {recentTasks.map((t) => {
+                    const dueAt = t.dueDate?.toDate ? t.dueDate.toDate() : null
+                    const dueLabel = dueAt
+                      ? `Due ${dueAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
+                      : 'No due date'
+                    const assigneeLabel = teamMembers.find(m => m.id === t.assigneeId)?.name || 'Team member'
+                    return (
+                      <div key={t.id} className="text-slate-600">
+                        <p className="font-medium">{t.name}</p>
+                        <p className="text-xs text-slate-500 mt-1">{assigneeLabel} • {dueLabel}</p>
+                      </div>
+                    )
+                  })}
                 </div>
-                <div className="text-slate-600">
-                  <p className="font-medium">Code Review — Auth Module</p>
-                  <p className="text-xs text-slate-500 mt-1">L. Chen • Due Mar 12</p>
-                </div>
-                <div className="text-slate-600">
-                  <p className="font-medium">CI/CD Pipeline Setup</p>
-                  <p className="text-xs text-slate-500 mt-1">M. Rivera • Due Mar 8</p>
-                </div>
-              </div>
+              )}
             </div>
           </Card>
         </div>

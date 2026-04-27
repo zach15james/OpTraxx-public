@@ -16,104 +16,56 @@ import {
 import { useAuth } from '@/context/AuthContext'
 import { useTeam } from '@/hooks/useTeam'
 import InviteTeamMembers from '@/components/InviteTeamMembers'
+import { db } from '@/lib/firebase'
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore'
 
 export default function Team() {
   const { teamId } = useParams()
   const { user } = useAuth()
   const [selectedMember, setSelectedMember] = useState(null)
-  const { teamMembers: firestoreMembers, liveActivity: firestoreLiveActivity, loading } = useTeam({ teamId, uid: user?.uid })
+  const [actionStatus, setActionStatus] = useState('')
+  const { teamMembers, liveActivity, loading } = useTeam({ teamId, uid: user?.uid })
 
   if (loading) {
     return <div className="flex items-center justify-center h-screen">Loading...</div>
   }
 
-  const teamMembers = firestoreMembers.length > 0 ? firestoreMembers : [
-    {
-      id: 1,
-      initials: 'AP',
-      name: 'A. Patel',
-      role: 'Senior Engineer',
-      status: 'On-Site',
-      statusColor: 'bg-green-100 text-green-800',
-      statusIcon: '📍',
-      workload: 85, // 0-100%
-      tasksCompleted: 12,
-      tasksPending: 3,
-      trendData: [45, 52, 58, 65, 72, 78, 85],
-      trendDirection: 'up',
-      lastAction: '2 mins ago - Completed "Server Patch"',
-      isOverloaded: true,
-    },
-    {
-      id: 2,
-      initials: 'JK',
-      name: 'J. Kim',
-      role: 'Frontend Engineer',
-      status: 'In Field',
-      statusColor: 'bg-blue-100 text-blue-800',
-      statusIcon: '🛣️',
-      workload: 45,
-      tasksCompleted: 8,
-      tasksPending: 1,
-      trendData: [40, 38, 42, 45, 43, 44, 45],
-      trendDirection: 'stable',
-      lastAction: '15 mins ago - Started "Form Redesign"',
-      isOverloaded: false,
-    },
-    {
-      id: 3,
-      initials: 'LC',
-      name: 'L. Chen',
-      role: 'QA Engineer',
-      status: 'Clocked Out',
-      statusColor: 'bg-slate-100 text-slate-800',
-      statusIcon: '✓',
-      workload: 20,
-      tasksCompleted: 15,
-      tasksPending: 0,
-      trendData: [85, 82, 78, 72, 65, 45, 20],
-      trendDirection: 'down',
-      lastAction: '1 hour ago - Clocked out',
-      isOverloaded: false,
-    },
-    {
-      id: 4,
-      initials: 'MR',
-      name: 'M. Rivera',
-      role: 'DevOps Engineer',
-      status: 'On-Site',
-      statusColor: 'bg-green-100 text-green-800',
-      statusIcon: '📍',
-      workload: 60,
-      tasksCompleted: 10,
-      tasksPending: 2,
-      trendData: [55, 58, 60, 62, 60, 58, 60],
-      trendDirection: 'stable',
-      lastAction: '5 mins ago - Uploaded deployment logs',
-      isOverloaded: false,
-    },
-  ]
-
-  const liveActivity = firestoreLiveActivity.length > 0 ? firestoreLiveActivity : [
-    { time: '2 mins ago', action: 'Team member completed', task: 'Task', icon: '✅' },
-  ]
-
   const overloadedMembers = teamMembers.filter(m => m.isOverloaded)
+
+  const showStatus = (msg) => {
+    setActionStatus(msg)
+    setTimeout(() => setActionStatus(''), 3000)
+  }
 
   const rebalanceWorkload = () => {
     if (overloadedMembers.length === 0) {
-      alert('No overloaded team members!')
+      showStatus('No overloaded team members.')
       return
     }
     const overloaded = overloadedMembers[0]
     const underutilized = teamMembers.find(m => m.workload < 50 && m.id !== overloaded.id)
     if (underutilized) {
-      alert(`💡 Suggestion: Move non-urgent tasks from ${overloaded.name} to ${underutilized.name}`)
+      showStatus(`Suggestion: move tasks from ${overloaded.name} to ${underutilized.name}`)
+    } else {
+      showStatus(`${overloaded.name} is overloaded but no underutilized members are available.`)
     }
   }
 
-  const sendNudge = (memberName) => {
-    alert(`📢 Nudge sent to ${memberName}`)
+  const sendNudge = async (member) => {
+    if (!user?.uid) return
+    try {
+      await addDoc(collection(db, 'nudges'), {
+        toUid: member.id,
+        toName: member.name,
+        fromUid: user.uid,
+        message: 'Nudge: please check in on your tasks.',
+        createdAt: serverTimestamp(),
+        read: false,
+      })
+      showStatus(`Nudge sent to ${member.name}`)
+    } catch (err) {
+      showStatus(`Failed to send nudge: ${err.message || err}`)
+    }
   }
 
   // Mini sparkline component
@@ -153,10 +105,23 @@ export default function Team() {
         )}
       </div>
 
+      {/* Action status banner */}
+      {actionStatus && (
+        <Card className="p-3 border-blue-200 bg-blue-50">
+          <p className="text-sm text-blue-800">{actionStatus}</p>
+        </Card>
+      )}
+
       {/* Main Grid */}
       <div className="grid grid-cols-4 gap-6">
         {/* Team Member Cards */}
         <div className="col-span-3 space-y-6">
+          {teamMembers.length === 0 && (
+            <Card className="p-8 text-center border-dashed border-slate-300">
+              <p className="text-slate-700 font-medium mb-1">No team members yet</p>
+              <p className="text-sm text-slate-500">Invite people below to get started.</p>
+            </Card>
+          )}
           {/* Workload At-A-Glance Grid */}
           <div className="grid grid-cols-2 gap-6">
             {teamMembers.map((member) => (
@@ -245,7 +210,7 @@ export default function Team() {
 
                 {/* Action Buttons */}
                 <Button
-                  onClick={() => sendNudge(member.name)}
+                  onClick={(e) => { e.stopPropagation(); sendNudge(member) }}
                   className="w-full bg-blue-100 text-blue-700 hover:bg-blue-200 text-sm font-medium"
                 >
                   <MessageSquare className="w-3 h-3 mr-2" />
@@ -283,6 +248,9 @@ export default function Team() {
 
           {/* Activity Feed */}
           <Card className="p-4 space-y-4 border-slate-200">
+            {liveActivity.length === 0 && (
+              <p className="text-sm text-slate-500">No recent activity.</p>
+            )}
             {liveActivity.map((activity, idx) => (
               <div key={idx} className="text-sm space-y-1 pb-4 border-b border-slate-200 last:border-0 last:pb-0">
                 <p className="text-xs text-slate-500">{activity.time}</p>
@@ -306,7 +274,7 @@ export default function Team() {
               <div className="flex justify-between">
                 <span className="text-slate-600">Avg Workload</span>
                 <span className="font-bold text-slate-900">
-                  {Math.round(teamMembers.reduce((a, b) => a + b.workload, 0) / teamMembers.length)}%
+                  {teamMembers.length > 0 ? Math.round(teamMembers.reduce((a, b) => a + b.workload, 0) / teamMembers.length) : 0}%
                 </span>
               </div>
               <div className="flex justify-between">

@@ -10,11 +10,9 @@ import ForgotPassword from './pages/ForgotPassword'
 import RoleSelectionPage from './pages/RoleSelectionPage'
 import Dashboard from './pages/Dashboard'
 import Team from './pages/Team'
-import Forms from './pages/Forms'
 import TaskList from './pages/TaskList'
 import Analytics from './pages/Analytics'
 import AssignTask from './pages/AssignTask'
-import FormBuilder from './pages/FormBuilder'
 import Profile from './pages/Profile'
 import Escalations from './pages/Escalations'
 import Pricing from './pages/Pricing'
@@ -73,9 +71,7 @@ function App() {
                             <Route path="/dashboard/:teamId" element={<Dashboard />} />
                             <Route path="/analytics" element={<Analytics />} />
                             <Route path="/assign" element={<AssignTask />} />
-                            <Route path="/form-builder" element={<FormBuilder />} />
                             <Route path="/team/:teamId" element={<Team />} />
-                            <Route path="/forms" element={<Forms />} />
                             <Route path="/forms-manage" element={<SupervisorFormsPage />} />
                             <Route path="/forms-manage/submissions/:formId" element={<SupervisorSubmissionsPage />} />
                         </Route>

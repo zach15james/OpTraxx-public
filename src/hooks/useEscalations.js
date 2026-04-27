@@ -25,9 +25,16 @@ export function useEscalations({ uid }) {
                 const daysOverdue = Math.floor((now - createdTime) / (1000 * 60 * 60 * 24))
                 const hoursStuck = Math.floor((now - createdTime) / (1000 * 60 * 60))
 
+                const notesTimeline = (data.notes || []).map(n => ({
+                    time: n.at?.toDate ? new Date(n.at.toDate()).toLocaleString() : 'Recently',
+                    action: `Note: ${n.text}`,
+                    user: n.byName || 'Supervisor',
+                }))
+
                 return {
                     id: docSnapshot.id,
                     title: data.name || 'Untitled Task',
+                    assigneeId: data.assigneeId || null,
                     assignee: {
                         initials: (assignee?.name || 'Unknown').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2),
                         name: assignee?.name || 'Unknown',
@@ -43,6 +50,7 @@ export function useEscalations({ uid }) {
                     lastUpdate: 'Recently',
                     timeline: [
                         { time: new Date().toLocaleString(), action: 'Task escalated', user: 'System' },
+                        ...notesTimeline,
                     ],
                     completionRate: 50,
                 }
