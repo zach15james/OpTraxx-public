@@ -25,7 +25,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
-import { LayoutDashboardIcon, CheckSquareIcon, SendIcon, SquareIcon, BarChart3Icon, UsersIcon, AlertTriangle, FileTextIcon } from 'lucide-react'
+import { LayoutDashboardIcon, CheckSquareIcon, SendIcon, SquareIcon, BarChart3Icon, UsersIcon, AlertTriangle, FileTextIcon, Settings as SettingsIcon } from 'lucide-react'
 import logoWithText from '@/assets/OpTraxx_Logo_withText.png'
 
 export default function MainLayout() {
@@ -207,11 +207,16 @@ export default function MainLayout() {
               <SidebarMenuItem>
                 <SidebarMenuButton
                   asChild
-                  className="!text-slate-300 hover:!bg-slate-800/50 hover:!text-white px-3 py-2 rounded-lg"
+                  isActive={isActive('/settings')}
+                  className={`px-3 py-2 rounded-lg flex items-center gap-2 transition-all ${
+                    isActive('/settings')
+                      ? '!bg-blue-600 !text-white'
+                      : '!text-slate-300 hover:!bg-slate-800/50 hover:!text-white'
+                  }`}
                 >
-                  <Link to="/profile" className="flex items-center gap-2">
-                    <FileTextIcon size={18} />
-                    <span className="text-sm">Reports & Export</span>
+                  <Link to="/settings" className="flex items-center gap-2">
+                    <SettingsIcon size={18} />
+                    <span className="text-sm">Settings</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -244,7 +249,7 @@ export default function MainLayout() {
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => navigate('/profile')}>Profile</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate('/profile')}>Settings</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate('/settings')}>Settings</DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={async () => { await signOut(auth); navigate('/login') }}>Log out</DropdownMenuItem>
             </DropdownMenuContent>
