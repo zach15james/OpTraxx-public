@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { Link, useLocation } from 'react-router-dom'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -11,6 +11,7 @@ import { db } from '@/lib/firebase'
 import { doc, deleteDoc } from 'firebase/firestore'
 
 export default function TaskList() {
+  const location = useLocation()
   const [sortBy, setSortBy] = useState('due-date')
   const [statusFilter, setStatusFilter] = useState('all')
   const [searchTerm, setSearchTerm] = useState('')
@@ -18,6 +19,13 @@ export default function TaskList() {
   const [deleting, setDeleting] = useState(false)
   const { user, userProfile } = useAuth()
   const { tasks, loading } = useTaskList({ uid: user?.uid, userRole: userProfile?.role })
+
+  // Apply filter from navigation state if present
+  useEffect(() => {
+    if (location.state?.filterStatus) {
+      setStatusFilter(location.state.filterStatus)
+    }
+  }, [location.state?.filterStatus])
 
   if (loading) {
     return <div className="flex items-center justify-center h-screen">Loading...</div>
@@ -34,6 +42,17 @@ export default function TaskList() {
       || t.name.toLowerCase().includes(searchTerm.toLowerCase()))
     .slice()
     .sort((a, b) => {
+      if (sortBy === 'due-date') {
+        // Sort by due date, with overdue tasks first
+        const aOverdue = a.rawStatus === 'overdue' ? 0 : 1
+        const bOverdue = b.rawStatus === 'overdue' ? 0 : 1
+        if (aOverdue !== bOverdue) return aOverdue - bOverdue
+        // Then sort by actual due date
+        if (a.dueDateObj && b.dueDateObj) return a.dueDateObj - b.dueDateObj
+        if (a.dueDateObj) return -1
+        if (b.dueDateObj) return 1
+        return 0
+      }
       if (sortBy === 'priority') return (priorityOrder[a.priority] ?? 99) - (priorityOrder[b.priority] ?? 99)
       if (sortBy === 'name') return a.name.localeCompare(b.name)
       if (sortBy === 'status') return a.rawStatus.localeCompare(b.rawStatus)
