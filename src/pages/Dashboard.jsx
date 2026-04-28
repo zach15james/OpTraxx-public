@@ -1,4 +1,4 @@
-import { Link, useParams } from 'react-router-dom'
+import { Link, useParams, useNavigate } from 'react-router-dom'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -8,6 +8,7 @@ import { useDashboard } from '@/hooks/useDashboard'
 
 export default function Dashboard() {
   const { teamId } = useParams()
+  const navigate = useNavigate()
   const { user, userProfile } = useAuth()
   const { stats, activeTasks, teamMembers, recentActivity, loading } = useDashboard({ uid: user?.uid, teamId })
 
@@ -35,6 +36,18 @@ export default function Dashboard() {
     color: statColors[stat.label] || 'text-blue-600',
   }))
 
+  const handleStatClick = (label) => {
+    if (label === 'Open Tasks') {
+      navigate('/tasks')
+    } else if (label === 'Completed') {
+      navigate('/tasks', { state: { filterStatus: 'done' } })
+    } else if (label === 'Overdue') {
+      navigate('/tasks', { state: { filterStatus: 'overdue' } })
+    } else if (label === 'Completion Rate') {
+      navigate('/analytics')
+    }
+  }
+
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -59,7 +72,11 @@ export default function Dashboard() {
         {enrichedStats.map((stat) => {
           const Icon = stat.icon
           return (
-            <Card key={stat.label} className="p-6 border-slate-200 hover:shadow-md transition-shadow">
+            <Card
+              key={stat.label}
+              onClick={() => handleStatClick(stat.label)}
+              className="p-6 border-slate-200 hover:shadow-lg hover:border-blue-300 transition-all cursor-pointer"
+            >
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-sm text-slate-600 uppercase tracking-wide font-semibold">
