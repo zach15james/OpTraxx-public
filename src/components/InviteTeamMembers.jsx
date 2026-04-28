@@ -53,7 +53,7 @@ export default function InviteTeamMembers({ teamId }) {
         <Card className="p-6 border-slate-200 bg-gradient-to-br from-blue-50 to-slate-50 mb-6">
           <div className="space-y-4">
             <div>
-              <p className="text-sm text-slate-600 font-medium mb-2">Team Invite Code</p>
+              <p className="mb-2 text-sm font-medium text-slate-600 dark:text-slate-700">Team Invite Code</p>
               <div className="flex items-center gap-2">
                 <div className="flex-1 bg-white border-2 border-blue-200 rounded-lg p-4">
                   <p className="text-4xl font-bold tracking-widest text-slate-900 text-center font-mono">
@@ -84,7 +84,7 @@ export default function InviteTeamMembers({ teamId }) {
               </div>
             </div>
 
-            <p className="text-sm text-slate-600">
+            <p className="text-sm text-slate-600 dark:text-slate-700">
               Share this code with employees. They'll use it to request to join your team.
             </p>
           </div>
@@ -158,7 +158,7 @@ export default function InviteTeamMembers({ teamId }) {
 
         {pendingRequests.length === 0 && (
           <Card className="p-6 border-slate-200 bg-slate-50 text-center">
-            <p className="text-slate-600 text-sm">
+            <p className="text-sm text-slate-600 dark:text-slate-300">
               No pending join requests yet. Share the invite code with your team!
             </p>
           </Card>

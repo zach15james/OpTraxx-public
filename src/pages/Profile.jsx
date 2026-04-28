@@ -273,10 +273,13 @@ export default function Profile() {
                 </p>
               </div>
               <button
+                type="button"
                 onClick={() => handleNotificationToggle('taskAssigned')}
+                role="switch"
+                aria-checked={notifications.taskAssigned}
                 className={`relative h-6 w-11 rounded-full transition-colors ${
                   notifications.taskAssigned ? 'bg-blue-600' : 'bg-slate-300'
-                }`}
+                } focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
               >
                 <div
                   className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-transform ${
@@ -295,10 +298,13 @@ export default function Profile() {
                 </p>
               </div>
               <button
+                type="button"
                 onClick={() => handleNotificationToggle('overdueAlerts')}
+                role="switch"
+                aria-checked={notifications.overdueAlerts}
                 className={`relative h-6 w-11 rounded-full transition-colors ${
                   notifications.overdueAlerts ? 'bg-blue-600' : 'bg-slate-300'
-                }`}
+                } focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
               >
                 <div
                   className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-transform ${
@@ -317,10 +323,13 @@ export default function Profile() {
                 </p>
               </div>
               <button
+                type="button"
                 onClick={() => handleNotificationToggle('taskCompletions')}
+                role="switch"
+                aria-checked={notifications.taskCompletions}
                 className={`relative h-6 w-11 rounded-full transition-colors ${
                   notifications.taskCompletions ? 'bg-blue-600' : 'bg-slate-300'
-                }`}
+                } focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
               >
                 <div
                   className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-transform ${
@@ -339,10 +348,13 @@ export default function Profile() {
                 </p>
               </div>
               <button
+                type="button"
                 onClick={() => handleNotificationToggle('weeklySummary')}
+                role="switch"
+                aria-checked={notifications.weeklySummary}
                 className={`relative h-6 w-11 rounded-full transition-colors ${
                   notifications.weeklySummary ? 'bg-blue-600' : 'bg-slate-300'
-                }`}
+                } focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
               >
                 <div
                   className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-transform ${

@@ -6,7 +6,7 @@ export default function PublicLayout() {
     return (
         <div className="flex min-h-screen flex-col">
             <HeroHeader />
-            <main className="flex-1 bg-[#F8FAFC]">
+            <main className="flex-1 bg-background">
                 <Outlet />
             </main>
             <FooterFour />

@@ -187,9 +187,9 @@ export default function Team() {
 
                 {/* Quick Stats */}
                 <div className="grid grid-cols-2 gap-3 mb-4">
-                  <div className="bg-green-50 p-3 rounded-lg">
-                    <p className="text-xs text-slate-600 mb-1">Completed</p>
-                    <p className="text-2xl font-bold text-green-600">{member.tasksCompleted}</p>
+                  <div className="rounded-lg bg-green-50 p-3 dark:bg-emerald-500/12 dark:ring-1 dark:ring-emerald-400/20">
+                    <p className="mb-1 text-xs text-slate-600 dark:text-emerald-100">Completed</p>
+                    <p className="text-2xl font-bold text-green-600 dark:text-emerald-300">{member.tasksCompleted}</p>
                   </div>
                   <div className="bg-blue-50 p-3 rounded-lg">
                     <p className="text-xs text-slate-600 mb-1">Pending</p>

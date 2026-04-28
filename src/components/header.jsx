@@ -24,38 +24,46 @@ export const HeroHeader = () => {
         window.addEventListener('scroll', handleScroll)
         return () => window.removeEventListener('scroll', handleScroll)
     }, [])
+
+    React.useEffect(() => {
+        if (!menuState) return undefined
+
+        const closeMenu = () => setMenuState(false)
+        window.addEventListener('resize', closeMenu)
+        return () => window.removeEventListener('resize', closeMenu)
+    }, [menuState])
+
     return (
-        <header>
+        <header className="sticky top-0 z-40">
             <nav
                 data-state={menuState && 'active'}
                 className={cn(
-                    'fixed z-20 w-full transition-all duration-300',
-                    isScrolled && 'bg-background/75 border-b border-black/5 backdrop-blur-lg'
+                    'fixed inset-x-0 top-0 z-40 transition-all duration-300',
+                    isScrolled
+                        ? 'border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur dark:border-white/10 dark:bg-slate-950/95'
+                        : 'bg-white/90 backdrop-blur dark:bg-slate-950/88'
                 )}>
-                <div className="mx-auto max-w-5xl px-6">
-                    <div
-                        className="relative flex flex-wrap items-center justify-between gap-6 py-4 lg:gap-0 lg:py-3">
-                        <div className="flex w-full justify-between gap-6 lg:w-auto">
-                            <Link to="/" aria-label="home" className="flex items-center space-x-2">
-                                <Logo />
+                <div className="mx-auto max-w-6xl px-6 lg:px-8">
+                    <div className="relative flex items-center justify-between gap-6 py-4">
+                        <div className="flex items-center gap-8">
+                            <Link to="/" aria-label="home" className="flex items-center">
+                                <Logo className="h-9" />
                             </Link>
 
                             <button
                                 onClick={() => setMenuState(!menuState)}
-                                aria-label={menuState == true ? 'Close Menu' : 'Open Menu'}
-                                className="relative z-20 -m-2.5 -mr-4 block cursor-pointer p-2.5 lg:hidden">
-                                <Menu
-                                    className="in-data-[state=active]:rotate-180 in-data-[state=active]:scale-0 in-data-[state=active]:opacity-0 m-auto size-6 duration-200" />
-                                <X
-                                    className="in-data-[state=active]:rotate-0 in-data-[state=active]:scale-100 in-data-[state=active]:opacity-100 absolute inset-0 m-auto size-6 -rotate-180 scale-0 opacity-0 duration-200" />
+                                aria-label={menuState === true ? 'Close Menu' : 'Open Menu'}
+                                className="relative z-20 -mr-2 block cursor-pointer rounded-lg p-2 text-slate-700 dark:text-slate-200 lg:hidden">
+                                <Menu className="in-data-[state=active]:rotate-180 in-data-[state=active]:scale-0 in-data-[state=active]:opacity-0 m-auto size-6 duration-200" />
+                                <X className="in-data-[state=active]:rotate-0 in-data-[state=active]:scale-100 in-data-[state=active]:opacity-100 absolute inset-0 m-auto size-6 -rotate-180 scale-0 opacity-0 duration-200" />
                             </button>
 
-                            <div className="m-auto hidden size-fit lg:block">
-                                <ul className="flex gap-1">
-                                    {menuItems.map((item, index) => (
-                                        <li key={index}>
-                                            <Button asChild variant="ghost" size="sm">
-                                                <Link to={item.href} className="text-base">
+                            <div className="hidden lg:block">
+                                <ul className="flex items-center gap-1.5">
+                                    {menuItems.map((item) => (
+                                        <li key={item.href}>
+                                            <Button asChild variant="ghost" size="sm" className="h-9 px-3 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-950 dark:text-slate-200 dark:hover:bg-white/8 dark:hover:text-white">
+                                                <Link to={item.href}>
                                                     <span>{item.name}</span>
                                                 </Link>
                                             </Button>
@@ -65,30 +73,30 @@ export const HeroHeader = () => {
                             </div>
                         </div>
 
-                        <div
-                            className="bg-background in-data-[state=active]:block lg:in-data-[state=active]:flex mb-6 hidden w-full flex-wrap items-center justify-end space-y-8 rounded-3xl border p-6 shadow-2xl shadow-zinc-300/20 md:flex-nowrap lg:m-0 lg:flex lg:w-fit lg:gap-6 lg:space-y-0 lg:border-transparent lg:bg-transparent lg:p-0 lg:shadow-none dark:shadow-none dark:lg:bg-transparent">
+                        <div className="in-data-[state=active]:block absolute left-0 right-0 top-full mt-2 hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-xl dark:border-white/10 dark:bg-slate-900 lg:static lg:mt-0 lg:flex lg:w-auto lg:items-center lg:justify-end lg:gap-3 lg:rounded-none lg:border-0 lg:bg-transparent lg:p-0 lg:shadow-none">
                             <div className="lg:hidden">
-                                <ul className="space-y-6 text-base">
-                                    {menuItems.map((item, index) => (
-                                        <li key={index}>
+                                <ul className="space-y-2 text-base">
+                                    {menuItems.map((item) => (
+                                        <li key={item.href}>
                                             <Link
                                                 to={item.href}
-                                                className="text-muted-foreground hover:text-accent-foreground block duration-150">
+                                                onClick={() => setMenuState(false)}
+                                                className="block rounded-lg px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 hover:text-slate-950 dark:text-slate-200 dark:hover:bg-white/8 dark:hover:text-white">
                                                 <span>{item.name}</span>
                                             </Link>
                                         </li>
                                     ))}
                                 </ul>
                             </div>
-                            <div className="flex w-full flex-col space-y-3 sm:flex-row sm:gap-3 sm:space-y-0 md:w-fit">
-                                <Button asChild variant="ghost" size="sm">
-                                    <Link to="/login">
+                            <div className="mt-5 flex w-full flex-col gap-3 lg:mt-0 lg:w-auto lg:flex-row">
+                                <Button asChild variant="ghost" size="sm" className="h-10 px-4 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-950 dark:text-slate-200 dark:hover:bg-white/8 dark:hover:text-white">
+                                    <Link to="/login" onClick={() => setMenuState(false)}>
                                         <span>Login</span>
                                     </Link>
                                 </Button>
-                                <Button asChild size="sm" className="bg-[#2563eb] hover:bg-[#2563eb]/90">
-                                    <Link to="/signup">
-                                        <span>Sign Up</span>
+                                <Button asChild size="sm" className="h-10 bg-[#2563eb] px-4 text-sm font-semibold text-white hover:bg-[#1d4ed8]">
+                                    <Link to="/signup" onClick={() => setMenuState(false)}>
+                                        <span>Start Free</span>
                                     </Link>
                                 </Button>
                             </div>
@@ -97,5 +105,5 @@ export const HeroHeader = () => {
                 </div>
             </nav>
         </header>
-    );
+    )
 }

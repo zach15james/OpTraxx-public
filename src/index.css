@@ -3,7 +3,7 @@
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/geist";
 
-@custom-variant dark (&.dark);
+@custom-variant dark (&:is(.dark *));
 
 @theme inline {
     --font-heading: var(--font-sans);
@@ -81,6 +81,7 @@
     --sidebar-accent-foreground: oklch(0.205 0 0);
     --sidebar-border: oklch(0.922 0 0);
     --sidebar-ring: oklch(0.708 0 0);
+    color-scheme: light;
 }
 
 .dark {
@@ -115,6 +116,7 @@
     --sidebar-accent-foreground: oklch(0.985 0 0);
     --sidebar-border: oklch(1 0 0 / 10%);
     --sidebar-ring: oklch(0.556 0 0);
+    color-scheme: dark;
 }
 
 @layer base {
@@ -127,4 +129,107 @@
   html {
     @apply font-sans;
     }
+}
+
+@layer utilities {
+  .dark .bg-white {
+    background-color: oklch(0.205 0 0) !important;
+  }
+
+  .dark .bg-slate-50 {
+    background-color: oklch(0.18 0 0) !important;
+  }
+
+  .dark .bg-slate-100 {
+    background-color: oklch(0.24 0 0) !important;
+  }
+
+  .dark .bg-slate-200 {
+    background-color: oklch(0.28 0 0) !important;
+  }
+
+  .dark .bg-blue-50 {
+    background-color: rgba(37, 99, 235, 0.16) !important;
+  }
+
+  .dark .bg-red-50 {
+    background-color: rgba(220, 38, 38, 0.14) !important;
+  }
+
+  .dark .bg-red-100 {
+    background-color: rgba(220, 38, 38, 0.2) !important;
+  }
+
+  .dark .bg-green-100 {
+    background-color: rgba(22, 163, 74, 0.2) !important;
+  }
+
+  .dark .bg-yellow-100 {
+    background-color: rgba(202, 138, 4, 0.22) !important;
+  }
+
+  .dark .text-slate-900 {
+    color: oklch(0.985 0 0) !important;
+  }
+
+  .dark .text-slate-700 {
+    color: oklch(0.92 0 0) !important;
+  }
+
+  .dark .text-slate-600 {
+    color: oklch(0.82 0 0) !important;
+  }
+
+  .dark .text-slate-500 {
+    color: oklch(0.74 0 0) !important;
+  }
+
+  .dark .text-slate-400 {
+    color: oklch(0.66 0 0) !important;
+  }
+
+  .dark .text-blue-800,
+  .dark .text-blue-700,
+  .dark .text-blue-600 {
+    color: rgb(147 197 253) !important;
+  }
+
+  .dark .text-green-800,
+  .dark .text-green-700,
+  .dark .text-green-600,
+  .dark .text-emerald-600 {
+    color: rgb(110 231 183) !important;
+  }
+
+  .dark .text-red-900,
+  .dark .text-red-800,
+  .dark .text-red-700,
+  .dark .text-red-600 {
+    color: rgb(252 165 165) !important;
+  }
+
+  .dark .text-yellow-800 {
+    color: rgb(253 224 71) !important;
+  }
+
+  .dark .border-slate-200,
+  .dark .border-slate-300 {
+    border-color: rgba(255, 255, 255, 0.12) !important;
+  }
+
+  .dark .border-blue-200 {
+    border-color: rgba(96, 165, 250, 0.28) !important;
+  }
+
+  .dark .border-red-200 {
+    border-color: rgba(248, 113, 113, 0.28) !important;
+  }
+
+  .dark .hover\:bg-slate-50:hover {
+    background-color: oklch(0.24 0 0) !important;
+  }
+
+  .dark .hover\:bg-slate-300:hover {
+    background-color: oklch(0.32 0 0) !important;
+  }
 }

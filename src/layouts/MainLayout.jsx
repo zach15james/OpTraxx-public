@@ -259,12 +259,12 @@ export default function MainLayout() {
 
       <SidebarInset>
         {/* Topbar */}
-        <header className="sticky top-0 z-10 flex h-16 items-center border-b border-slate-200 bg-white px-8">
-          <SidebarTrigger className="text-slate-600" />
+        <header className="sticky top-0 z-10 flex h-16 items-center border-b border-border bg-background px-8">
+          <SidebarTrigger className="text-muted-foreground" />
         </header>
 
         {/* Main Content */}
-        <main className="flex-1 bg-slate-50 p-8">
+        <main className="flex-1 bg-background p-8">
           <Outlet />
         </main>
       </SidebarInset>

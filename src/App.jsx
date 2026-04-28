@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { useEffect } from 'react'
 import { AuthProvider } from './context/AuthContext'
 import ProtectedRoute from './components/ProtectedRoute'
 import MainLayout from './layouts/MainLayout'
@@ -28,11 +29,29 @@ import SupervisorFormsPage from './zach_contributions/SupervisorFormsPage'
 import SupervisorSubmissionsPage from './zach_contributions/SupervisorSubmissionsPage'
 import EmployeeFormsPage from './zach_contributions/EmployeeFormsPage'
 import EmployeeFormFillPage from './zach_contributions/EmployeeFormFillPage'
+import { useTheme } from './context/ThemeContext'
+import { useAuth } from './context/AuthContext'
+
+function ThemePreferenceSync() {
+    const { userProfile } = useAuth()
+    const { theme, setThemePreference } = useTheme()
+
+    useEffect(() => {
+        const preferredTheme = userProfile?.appearancePreference
+        if (!preferredTheme) return
+        if (preferredTheme !== theme) {
+            setThemePreference(preferredTheme)
+        }
+    }, [theme, setThemePreference, userProfile?.appearancePreference])
+
+    return null
+}
 
 function App() {
     return (
         <BrowserRouter>
             <AuthProvider>
+                <ThemePreferenceSync />
                 <Routes>
                     {/* Public routes with shared header */}
                     <Route element={<PublicLayout />}>
