@@ -18,10 +18,12 @@ import {
   getDoc,
 } from 'firebase/firestore'
 import { useTeamInvites } from '@/hooks/useTeamInvites'
+import { useTheme } from '@/context/ThemeContext'
 
 export default function Settings() {
   const navigate = useNavigate()
   const { user: firebaseUser, userProfile } = useAuth()
+  const { theme, setThemePreference } = useTheme()
   const isSupervisor = userProfile?.role === 'supervisor'
 
   // Section tabs
@@ -49,9 +51,6 @@ export default function Settings() {
     escalationAlerts: false,
     teamMemberJoined: false,
   })
-
-  // Appearance section state
-  const [theme, setTheme] = useState('system')
 
   // Danger zone state
   const [confirmDialog, setConfirmDialog] = useState({
@@ -128,7 +127,7 @@ export default function Settings() {
 
   // Save theme preference
   const handleThemeChange = async (newTheme) => {
-    setTheme(newTheme)
+    setThemePreference(newTheme)
     if (!firebaseUser?.uid) return
     try {
       await updateDoc(doc(db, 'users', firebaseUser.uid), {
@@ -272,9 +271,6 @@ export default function Settings() {
     if (userProfile.notificationPreferences) {
       setNotifications(prev => ({ ...prev, ...userProfile.notificationPreferences }))
     }
-    if (userProfile.appearancePreference) {
-      setTheme(userProfile.appearancePreference)
-    }
   }, [userProfile])
 
   const getFormattedDate = (timestamp) => {
@@ -293,10 +289,13 @@ export default function Settings() {
 
   const ToggleSwitch = ({ checked, onChange }) => (
     <button
+      type="button"
       onClick={onChange}
+      role="switch"
+      aria-checked={checked}
       className={`relative h-6 w-11 rounded-full transition-colors ${
         checked ? 'bg-blue-600' : 'bg-slate-300'
-      }`}
+      } focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
     >
       <div
         className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-transform ${

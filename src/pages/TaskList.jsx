@@ -8,7 +8,7 @@ import { useAuth } from '@/context/AuthContext'
 import { useTaskList } from '@/hooks/useTaskList'
 import JoinTeamCard from '@/components/JoinTeamCard'
 import { db } from '@/lib/firebase'
-import { doc, deleteDoc } from 'firebase/firestore'
+import { doc, deleteDoc, updateDoc } from 'firebase/firestore'
 
 export default function TaskList() {
   const location = useLocation()
@@ -17,10 +17,11 @@ export default function TaskList() {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedIds, setSelectedIds] = useState([])
   const [deleting, setDeleting] = useState(false)
+  const [unassigningIds, setUnassigningIds] = useState([])
+  const [bulkUnassigning, setBulkUnassigning] = useState(false)
   const { user, userProfile } = useAuth()
   const { tasks, loading } = useTaskList({ uid: user?.uid, userRole: userProfile?.role })
 
-  // Apply filter from navigation state if present
   useEffect(() => {
     if (location.state?.filterStatus) {
       setStatusFilter(location.state.filterStatus)
@@ -28,7 +29,7 @@ export default function TaskList() {
   }, [location.state?.filterStatus])
 
   if (loading) {
-    return <div className="flex items-center justify-center h-screen">Loading...</div>
+    return <div className="flex h-screen items-center justify-center">Loading...</div>
   }
 
   const isSupervisor = userProfile?.role === 'supervisor'
@@ -43,11 +44,9 @@ export default function TaskList() {
     .slice()
     .sort((a, b) => {
       if (sortBy === 'due-date') {
-        // Sort by due date, with overdue tasks first
         const aOverdue = a.rawStatus === 'overdue' ? 0 : 1
         const bOverdue = b.rawStatus === 'overdue' ? 0 : 1
         if (aOverdue !== bOverdue) return aOverdue - bOverdue
-        // Then sort by actual due date
         if (a.dueDateObj && b.dueDateObj) return a.dueDateObj - b.dueDateObj
         if (a.dueDateObj) return -1
         if (b.dueDateObj) return 1
@@ -73,6 +72,7 @@ export default function TaskList() {
   const deleteSelected = async () => {
     if (!isSupervisor || selectedIds.length === 0) return
     if (!confirm(`Delete ${selectedIds.length} task${selectedIds.length === 1 ? '' : 's'}?`)) return
+
     setDeleting(true)
     try {
       await Promise.all(selectedIds.map(id => deleteDoc(doc(db, 'tasks', id))))
@@ -84,56 +84,90 @@ export default function TaskList() {
     }
   }
 
+  const unassignTask = async (taskId) => {
+    if (!isSupervisor) return
+    if (!confirm('Unassign this task from its current employee?')) return
+
+    setUnassigningIds(prev => [...prev, taskId])
+    try {
+      await updateDoc(doc(db, 'tasks', taskId), {
+        assigneeId: null,
+        status: 'pending',
+      })
+      setSelectedIds(prev => prev.filter(id => id !== taskId))
+    } catch (err) {
+      alert('Failed to unassign task: ' + (err.message || err))
+    } finally {
+      setUnassigningIds(prev => prev.filter(id => id !== taskId))
+    }
+  }
+
+  const unassignSelected = async () => {
+    if (!isSupervisor || selectedIds.length === 0) return
+    if (!confirm(`Unassign ${selectedIds.length} task${selectedIds.length === 1 ? '' : 's'} from ${selectedIds.length === 1 ? 'this employee' : 'these employees'}?`)) return
+
+    setBulkUnassigning(true)
+    try {
+      await Promise.all(
+        selectedIds.map(id =>
+          updateDoc(doc(db, 'tasks', id), {
+            assigneeId: null,
+            status: 'pending',
+          })
+        )
+      )
+      setSelectedIds([])
+    } catch (err) {
+      alert('Failed to unassign selected tasks: ' + (err.message || err))
+    } finally {
+      setBulkUnassigning(false)
+    }
+  }
+
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-slate-900">Task List</h1>
-          <p className="text-slate-600 mt-1">Manage and track all assigned tasks</p>
+          <p className="mt-1 text-slate-600">Manage and track all assigned tasks</p>
         </div>
-        {userProfile?.role === 'supervisor' && (
-          <Button asChild className="bg-blue-600 hover:bg-blue-700 text-white">
+        {isSupervisor && (
+          <Button asChild className="bg-blue-600 text-white hover:bg-blue-700">
             <Link to="/assign">+ Assign Task</Link>
           </Button>
         )}
       </div>
 
-      {/* Join Team Card - Show if no team */}
       {!userProfile?.teamId && <JoinTeamCard />}
 
-      {/* Empty state */}
       {tasks.length === 0 && userProfile?.teamId && (
-        <Card className="p-8 text-center border-dashed border-slate-300">
-          <p className="text-slate-700 font-medium mb-1">No tasks yet</p>
+        <Card className="border-dashed border-slate-300 p-8 text-center">
+          <p className="mb-1 font-medium text-slate-700">No tasks yet</p>
           <p className="text-sm text-slate-500">
-            {userProfile?.role === 'supervisor'
+            {isSupervisor
               ? 'Assign a form-backed task to a team member to get started.'
-              : 'When your supervisor assigns you a task, it\'ll show up here.'}
+              : 'When your supervisor assigns you a task, it will show up here.'}
           </p>
         </Card>
       )}
 
-      {/* Filters and Search */}
-      <Card className="p-4 border-slate-200">
+      <Card className="border-slate-200 p-4">
         <div className="flex items-center gap-4">
-          {/* Search */}
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={18} />
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 transform text-slate-400" size={18} />
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search tasks..."
-              className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full rounded-lg border border-slate-300 py-2 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
-          {/* Status Filter */}
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-3 py-2 rounded-lg border border-slate-300 hover:bg-slate-50 text-slate-700 text-sm font-medium bg-white cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="cursor-pointer rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="all">All Status</option>
             <option value="pending">Pending</option>
@@ -142,11 +176,10 @@ export default function TaskList() {
             <option value="overdue">Overdue</option>
           </select>
 
-          {/* Sort */}
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
-            className="px-3 py-2 rounded-lg border border-slate-300 hover:bg-slate-50 text-slate-700 text-sm font-medium bg-white cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="cursor-pointer rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="due-date">Sort by Due Date</option>
             <option value="priority">Sort by Priority</option>
@@ -156,127 +189,131 @@ export default function TaskList() {
         </div>
       </Card>
 
-      {/* Bulk action bar (supervisor only, when selection exists) */}
       {isSupervisor && selectedIds.length > 0 && (
-        <Card className="p-3 border-blue-200 bg-blue-50 flex items-center justify-between">
-          <p className="text-sm text-blue-800 font-medium">
+        <Card className="flex items-center justify-between border-blue-200 bg-blue-50 p-3">
+          <p className="text-sm font-medium text-blue-800">
             {selectedIds.length} task{selectedIds.length === 1 ? '' : 's'} selected
           </p>
           <div className="flex gap-2">
-            <Button
-              onClick={() => setSelectedIds([])}
-              variant="outline"
-              size="sm"
-            >
+            <Button onClick={() => setSelectedIds([])} variant="outline" size="sm">
               Clear
+            </Button>
+            <Button onClick={unassignSelected} disabled={bulkUnassigning} variant="outline" size="sm">
+              {bulkUnassigning ? 'Unassigning...' : 'Unassign'}
             </Button>
             <Button
               onClick={deleteSelected}
               disabled={deleting}
               size="sm"
-              className="bg-red-600 hover:bg-red-700 text-white disabled:opacity-50"
+              className="bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
             >
               <Trash2 size={14} className="mr-1" />
-              {deleting ? 'Deleting…' : 'Delete'}
+              {deleting ? 'Deleting...' : 'Delete'}
             </Button>
           </div>
         </Card>
       )}
 
-      {/* Tasks Table */}
-      <Card className="border-slate-200 overflow-hidden">
+      <Card className="overflow-hidden border-slate-200">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="border-b border-slate-200 bg-slate-50">
-                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase">
+                <th className="px-6 py-3 text-left text-xs font-semibold uppercase text-slate-600">
                   {isSupervisor ? (
                     <input
                       type="checkbox"
                       checked={allFilteredSelected}
                       onChange={toggleAll}
-                      className="rounded cursor-pointer"
+                      className="cursor-pointer rounded"
                     />
                   ) : null}
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase">
-                  Task Name
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase">
-                  Assignee
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase">
-                  Priority
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase">
-                  Due Date
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase">
-                  Form
-                </th>
-                <th className="px-6 py-3 text-right text-xs font-semibold text-slate-600 uppercase">
-                  Action
-                </th>
+                <th className="px-6 py-3 text-left text-xs font-semibold uppercase text-slate-600">Task Name</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold uppercase text-slate-600">Assignee</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold uppercase text-slate-600">Status</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold uppercase text-slate-600">Priority</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold uppercase text-slate-600">Due Date</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold uppercase text-slate-600">Form</th>
+                <th className="px-6 py-3 text-right text-xs font-semibold uppercase text-slate-600">Action</th>
               </tr>
             </thead>
             <tbody>
               {filteredTasks.map((task) => {
-                const canComplete = task.formId && task.rawStatus !== 'done'
+                const canComplete = !isSupervisor && task.formId && task.rawStatus !== 'done'
+                const isUnassigning = unassigningIds.includes(task.id)
+
                 return (
-                  <tr key={task.id} className="border-b border-slate-200 hover:bg-slate-50 transition-colors">
+                  <tr key={task.id} className="border-b border-slate-200 transition-colors hover:bg-slate-50">
                     <td className="px-6 py-4">
                       {isSupervisor ? (
                         <input
                           type="checkbox"
                           checked={selectedIds.includes(task.id)}
                           onChange={() => toggleOne(task.id)}
-                          className="rounded cursor-pointer"
+                          className="cursor-pointer rounded"
                         />
                       ) : null}
                     </td>
-                    <td className="px-6 py-4 text-sm font-medium text-slate-900">
-                      {task.name}
+                    <td className="px-6 py-4 text-sm font-medium text-slate-900">{task.name}</td>
+                    <td className="px-6 py-4">
+                      {task.assignee.isUnassigned ? (
+                        <span className="inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">
+                          Unassigned
+                        </span>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <Avatar className="flex h-7 w-7 items-center justify-center bg-blue-600 text-xs font-semibold text-white">
+                            <AvatarFallback className="bg-blue-600 text-xs text-white">
+                              {task.assignee.initials}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className="text-sm text-slate-600">{task.assignee.name}</span>
+                        </div>
+                      )}
                     </td>
                     <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <Avatar className="h-7 w-7 bg-blue-600 text-white text-xs font-semibold flex items-center justify-center">
-                          <AvatarFallback className="bg-blue-600 text-white text-xs">
-                            {task.assignee.initials}
-                          </AvatarFallback>
-                        </Avatar>
-                        <span className="text-sm text-slate-600">{task.assignee.name}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${task.statusColor}`}>
+                      <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${task.statusColor}`}>
                         {task.status}
                       </span>
                     </td>
                     <td className="px-6 py-4">
-                      <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${task.priorityColor}`}>
+                      <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${task.priorityColor}`}>
                         {task.priority}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-sm text-slate-600">
-                      {task.dueDate}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-slate-600">
-                      {task.form}
-                    </td>
+                    <td className="px-6 py-4 text-sm text-slate-600">{task.dueDate}</td>
+                    <td className="px-6 py-4 text-sm text-slate-600">{task.form}</td>
                     <td className="px-6 py-4 text-right">
-                      {canComplete ? (
-                        <Button asChild size="sm" className="bg-blue-600 hover:bg-blue-700 text-white">
+                      {isSupervisor ? (
+                        task.rawStatus === 'done' && task.formId ? (
+                          <Button asChild size="sm" variant="outline">
+                            <Link to={`/forms-manage/submissions/${task.formId}?taskId=${task.id}`}>
+                              View submission
+                            </Link>
+                          </Button>
+                        ) : task.assigneeId ? (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            disabled={isUnassigning}
+                            onClick={() => unassignTask(task.id)}
+                          >
+                            {isUnassigning ? 'Unassigning...' : 'Unassign'}
+                          </Button>
+                        ) : (
+                          <span className="text-xs text-slate-400">-</span>
+                        )
+                      ) : canComplete ? (
+                        <Button asChild size="sm" className="bg-blue-600 text-white hover:bg-blue-700">
                           <Link to={`/my-forms/${task.formId}?taskId=${task.id}`}>
                             Complete
                           </Link>
                         </Button>
                       ) : task.rawStatus === 'done' ? (
-                        <span className="text-xs text-green-600 font-medium">✓ Done</span>
+                        <span className="text-xs font-medium text-green-600">Done</span>
                       ) : (
-                        <span className="text-xs text-slate-400">—</span>
+                        <span className="text-xs text-slate-400">-</span>
                       )}
                     </td>
                   </tr>

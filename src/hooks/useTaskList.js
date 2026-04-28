@@ -39,9 +39,11 @@ export function useTaskList({ uid, userRole }) {
                 return {
                     id: docSnapshot.id,
                     name: data.name || 'Untitled Task',
+                    assigneeId: data.assigneeId || null,
                     assignee: {
-                        initials: (assignee?.name || 'Unknown').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2),
+                        initials: (assignee?.name || 'Unassigned').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2),
                         name: assignee?.name || 'Unassigned',
+                        isUnassigned: !data.assigneeId,
                     },
                     status: actualStatus === 'in_progress' ? 'In Progress' : actualStatus === 'done' ? 'Done' : actualStatus === 'overdue' ? 'Overdue' : 'Pending',
                     rawStatus: actualStatus,

@@ -3,30 +3,30 @@ import { Check, Users, FileText, Shield } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
 const teamManagement = [
-    { feature: 'Teams',           free: '1',           pro: 'Up to 10',   enterprise: 'Unlimited' },
-    { feature: 'Members per team',free: 'Up to 5',     pro: 'Unlimited',  enterprise: 'Unlimited' },
-    { feature: 'Custom roles',    free: false,         pro: true,         enterprise: true },
-    { feature: 'Activity tracking',free: false,        pro: true,         enterprise: true },
+    { feature: 'Teams', free: '1', pro: 'Up to 10', enterprise: 'Unlimited' },
+    { feature: 'Members per team', free: 'Up to 5', pro: 'Unlimited', enterprise: 'Unlimited' },
+    { feature: 'Custom roles', free: false, pro: true, enterprise: true },
+    { feature: 'Activity tracking', free: false, pro: true, enterprise: true },
 ]
 
 const formsAnalytics = [
-    { feature: 'Custom forms',    free: '3',           pro: 'Unlimited',  enterprise: 'Unlimited' },
-    { feature: 'Form templates',  free: false,         pro: true,         enterprise: true },
-    { feature: 'Advanced analytics', free: false,      pro: true,         enterprise: true },
-    { feature: 'Custom reports',  free: false,         pro: '5 / mo',     enterprise: 'Unlimited' },
+    { feature: 'Custom forms', free: '3', pro: 'Unlimited', enterprise: 'Unlimited' },
+    { feature: 'Form templates', free: false, pro: true, enterprise: true },
+    { feature: 'Advanced analytics', free: false, pro: true, enterprise: true },
+    { feature: 'Custom reports', free: false, pro: '5 / mo', enterprise: 'Unlimited' },
 ]
 
 const securitySupport = [
-    { feature: 'Email support',   free: true,          pro: true,         enterprise: true },
-    { feature: 'Priority support',free: false,         pro: true,         enterprise: true },
-    { feature: 'SSO / SAML',      free: false,         pro: false,        enterprise: true },
-    { feature: 'Audit logs',      free: false,         pro: false,        enterprise: true },
-    { feature: 'SLA guarantee',   free: false,         pro: false,        enterprise: true },
+    { feature: 'Email support', free: true, pro: true, enterprise: true },
+    { feature: 'Priority support', free: false, pro: true, enterprise: true },
+    { feature: 'SSO / SAML', free: false, pro: false, enterprise: true },
+    { feature: 'Audit logs', free: false, pro: false, enterprise: true },
+    { feature: 'SLA guarantee', free: false, pro: false, enterprise: true },
 ]
 
 function Cell({ value }) {
     if (value === true) return <Check className="size-3 shrink-0" strokeWidth={3.5} style={{ color: '#2563eb' }} />
-    if (value === false) return <span className="text-muted-foreground">—</span>
+    if (value === false) return <span className="text-muted-foreground">-</span>
     return <span>{value}</span>
 }
 
@@ -34,17 +34,17 @@ export default function PricingComparatorOne() {
     return (
         <section className="bg-[#F8FAFC] py-16 md:py-32">
             <div className="mx-auto max-w-5xl px-6">
-                <div className="mx-auto max-w-2xl text-center mb-12 md:mb-20">
-                    <h2 className="text-balance text-3xl font-bold md:text-4xl text-[#0F172A]">
+                <div className="mx-auto mb-12 max-w-2xl text-center md:mb-20">
+                    <h2 className="text-balance text-3xl font-bold text-[#0F172A] md:text-4xl">
                         Compare plans in detail
                     </h2>
-                    <p className="text-muted-foreground mx-auto mt-4 max-w-xl text-balance text-lg">
+                    <p className="mx-auto mt-4 max-w-xl text-balance text-lg text-muted-foreground">
                         See exactly what's included in each plan before you commit.
                     </p>
                 </div>
                 <div className="w-full overflow-auto lg:overflow-visible">
                     <table className="w-[200vw] border-separate border-spacing-x-3 md:w-full">
-                        <thead className="bg-[#F8FAFC]/95 sticky top-0">
+                        <thead className="sticky top-0 bg-[#F8FAFC]/95">
                             <tr className="*:py-4 *:text-left *:font-medium">
                                 <th className="lg:w-2/5"></th>
                                 <th className="space-y-3">
@@ -55,7 +55,7 @@ export default function PricingComparatorOne() {
                                 </th>
                                 <th className="space-y-3">
                                     <span className="block text-[#0F172A]">Pro</span>
-                                    <Button asChild size="sm" className="bg-[#2563eb] hover:bg-[#2563eb]/90 text-white">
+                                    <Button asChild size="sm" className="bg-[#2563eb] text-white hover:bg-[#2563eb]/90">
                                         <Link to="/signup">Get Started</Link>
                                     </Button>
                                 </th>
@@ -68,8 +68,6 @@ export default function PricingComparatorOne() {
                             </tr>
                         </thead>
                         <tbody>
-
-                            {/* Team Management */}
                             <tr className="*:py-4">
                                 <td className="flex items-center gap-2 font-medium text-[#0F172A]">
                                     <Users className="size-4" style={{ color: '#2563eb' }} />
@@ -86,7 +84,6 @@ export default function PricingComparatorOne() {
                                 </tr>
                             ))}
 
-                            {/* Forms & Analytics */}
                             <tr className="*:pb-4 *:pt-8">
                                 <td className="flex items-center gap-2 font-medium text-[#0F172A]">
                                     <FileText className="size-4" style={{ color: '#10B981' }} />
@@ -103,7 +100,6 @@ export default function PricingComparatorOne() {
                                 </tr>
                             ))}
 
-                            {/* Security & Support */}
                             <tr className="*:pb-4 *:pt-8">
                                 <td className="flex items-center gap-2 font-medium text-[#0F172A]">
                                     <Shield className="size-4" style={{ color: '#0891B2' }} />
@@ -119,11 +115,10 @@ export default function PricingComparatorOne() {
                                     <td><Cell value={row.enterprise} /></td>
                                 </tr>
                             ))}
-
                         </tbody>
                     </table>
                 </div>
             </div>
         </section>
-    );
+    )
 }
