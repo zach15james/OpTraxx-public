@@ -98,9 +98,9 @@ export default function MainLayout() {
       <Sidebar className="!bg-slate-950 !border-slate-950">
         <SidebarContent className="!bg-slate-950 !text-slate-200">
           {/* Logo */}
-          <div className="px-4 py-4 mb-8">
-            <Link to="/">
-              <img src={logoWithText} alt="OpTraxx" className="h-6" />
+          <div className="px-4 py-6 mb-10 border-b border-slate-800">
+            <Link to="/" className="flex items-center">
+              <img src={logoWithText} alt="OpTraxx" className="h-8" />
             </Link>
           </div>
 
